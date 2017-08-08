@@ -1,5 +1,9 @@
 # Size of buffer
-const DIG_BLOCK_SIZE = 1024 * 1024
+const DIG_BLOCK_SIZE = 1024 * 1024 # 1 MiB
+
+# Clock selection
+const CLOCK_INTERNAL = 1
+const CLOCK_EXTERNAL = 0
 
 # Channel selection for AD14 and AD16
 const IN0 = 1

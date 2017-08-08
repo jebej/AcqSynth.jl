@@ -1,2 +1,4 @@
-deps/usr
 docs/build
+*.dll
+*.dat
+*.svf

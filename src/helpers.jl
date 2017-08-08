@@ -1,31 +1,52 @@
 # Helper functions
 
-function get_data(boardnum::Int,buffer::Array{UInt8,1},numblocks::Int)
-    # Initialize array to store the transferred blocks
-    blocks = Array{UInt8}(numblocks*DIG_BLOCK_SIZE)
-    for b=1:numblocks
+function list_boards()
+    numboards = get_num_boards()
+    numboards == 0 && error("No boards found!")
+    for n = 0:numboards-1
+        setup_board(n)
+        println("Board $n")
+        model = is_AD12(n) ? "AD12" : is_AD14(n) ? "AD14" : is_AD16(n) ? "AD16" : "unknown"
+        println("  model:      $model")
+        println("  serial:     $(get_serial(n))")
+        println("  frequency:  $(get_frequency(n)) MHz")
+        println("  channels:   $(get_all_channels(n))")
+        println("  microsynth: $(has_microsynth(n) ? "yes" : "no")")
+    end
+end
+
+function init_board(boardnum::Int)
+    # Force initialization and setup of the board
+    set_setup_done_bit(boardnum)
+    setup_board(boardnum)
+end
+
+function get_blocks(boardnum::Int,numblocks::Int)
+    blocks = Vector{UInt8}(numblocks*DIG_BLOCK_SIZE)
+    return get_blocks!(blocks,boardnum,numblocks)
+end
+
+function get_blocks!(blocks::Vector{UInt8},boardnum::Int,numblocks::Int)
+    for b = 1:numblocks
         # Transfer 1 block from the board into the buffer
-        mem_read(boardnum,buffer)
+        mem_read(boardnum,BLOCK_BUFFER)
         # Save that block
-        blocks[(b-1)*DIG_BLOCK_SIZE+1:b*DIG_BLOCK_SIZE] = buffer
+        @inbounds blocks[(b-1)*DIG_BLOCK_SIZE+1:b*DIG_BLOCK_SIZE] = BLOCK_BUFFER
     end
-    # We now have all the blocks in the blocks array, we need to extract the
-    # 12-bit samples from that array. The data in the blocks is organized in 4
-    # bytes / 32-bit words, and each word contains two 12-bit samples.
-    # Calculate the number of 32-bit words in the blocks array
-    numwords = div(numblocks*DIG_BLOCK_SIZE,4)
-    # Initialize array to store the samples
-    data = Array{Int32}(2*numwords)
-    for n=1:numwords
-        # The 12 bits of the first sample can be extracted from the first 2
-        # bytes of the 32-bit word by concatenating the 4 least significant bits
-        # in the second byte with the entire first byte. We do this by ANDind
-        # the second byte with 0x000f (keep only the 4 lsb and cast to 16-bit),
-        # shifting that 8 bits (putting those bits in the msbyte position) and
-        # ORing with the second byte.
-        data[(n-1)*2+1] = blocks[(n-1)*4+2]&0x000f<<8|blocks[(n-1)*4+1]
-        # We do the same thing for the second sample with the next two bytes
-        data[(n-1)*2+2] = blocks[(n-1)*4+4]&0x000f<<8|blocks[(n-1)*4+3]
+    return blocks
+end
+
+function get_samples12(blocks::Vector{UInt8})
+    # To get the 12-bit samples, we recast to an array of UInt16 and keep only
+    # the 12 least significant bits.
+    samples = reinterpret(UInt16,blocks)
+    for n = 1:length(samples)
+        samples[n] = samples[n]&0x0fff
     end
-    return data
+    return samples
+end
+
+function get_samples32(blocks::Vector{UInt8})
+    # To get the 32-bit samples, we simply recast to UInt32.
+    return reinterpret(UInt32,blocks)
 end

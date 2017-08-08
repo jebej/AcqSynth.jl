@@ -8,6 +8,7 @@ Return the number of Ultraview boards connected to the PC.
 # Examples
 ```julia
 julia> get_num_boards()
+1
 ```
 """
 function get_num_boards()
@@ -24,26 +25,19 @@ directory when it is executed.
 
 # Examples
 ```julia
-julia> boardnum = 2
+julia> boardnum = 0
 julia> get_serial(boardnum)
 ```
 """
 function get_serial(boardnum::Int)
     # Make sure that the "get_usercode.svf" file exists
-    if !isfile(joinpath(usr_dir,"get_usercode.svf"))
-        error("Make sure that the `get_usercode.svf` file is located in the deps/usr folder of the AcqSynth module!")
-    end
-    # Change to usr directory
-    current_dir = pwd()
-    cd(usr_dir)
+    isfile(joinpath(deps_dir,"get_usercode.svf")) || error("Make sure `get_usercode.svf` is in the `deps` directory.")
     # Make dll call
-    serial = ccall((:DllApiGetSerialNumber,libacqsynth),Cshort,(Cshort,),boardnum)
-    # Change back to previous directory
-    cd(current_dir)
-    # Check if we got a valid serial
-    if serial==-1
-        error("Make sure that the board number is valid!")
+    serial = cd(deps_dir) do
+        ccall((:DllApiGetSerialNumber,libacqsynth),Cshort,(Cshort,),boardnum)
     end
+    # Check if we got a valid serial
+    serial==-1 && error("Make sure that the board number is valid!")
     return serial
 end
 
@@ -79,20 +73,14 @@ the working directory when it is executed.
 """
 function setup_board(boardnum::Int)
     # Make sure that the "ultra_config.dat" file exists
-    if !isfile(joinpath(usr_dir,"ultra_config.dat"))
-        error("Make sure that the `ultra_config.dat` file is located in the deps/usr folder of the AcqSynth module!")
-    end
-    # Change to usr directory
-    current_dir = pwd()
-    cd(usr_dir)
+    isfile(joinpath(deps_dir,"ultra_config.dat")) || error("Make sure `ultra_config.dat` is in the `deps` directory.")
     # Make dll call
-    success = ccall((:SetupBoard,libacqsynth),Bool,(Cshort,),boardnum)
-    # Change back to previous directory
-    cd(current_dir)
-    # Check if the setup worked
-    if !success
-        error("The board for this board number is not properlly installed!")
+    success = cd(deps_dir) do
+        ccall((:SetupBoard,libacqsynth),Bool,(Cshort,),boardnum)
     end
+    # Check if the setup worked
+    success || error("The board for this board number is not properly installed!")
+    return nothing
 end
 
 """
@@ -205,6 +193,42 @@ function get_all_channels(boardnum::Int)
 end
 
 """
+    set_clock_select(boardnum,chan_select)
+
+Configure whether to use the CLOCK_INTERNAL, or CLOCK_EXTERNAL.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> set_clock_select(boardnum,CLOCK_INTERNAL)
+```
+"""
+function set_clock_select(boardnum::Int,clock::Int)
+    ccall((:SetInternalClockEnable,libacqsynth),Void,(Cshort,Cint),boardnum,clock)
+end
+
+"""
+    get_clock_select(boardnum)
+
+Return the clock being used, 1 for the internal clock, and 0 for the external.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> clock = get_clock_select(boardnum)
+```
+"""
+function get_clock_select(boardnum::Int)
+    return ccall((:GetInternalClockValue,libacqsynth),Cint,(Cshort,Cint),boardnum,clock)
+end
+
+"""
     set_channel_select(boardnum,chan_select)
 
 Configure which channels to use for acquisition.
@@ -229,7 +253,7 @@ julia> chan_select = IN0|IN1
 julia> set_channel_select(boardnum,chan_select)
 ```
 """
-function set_channel_select(boardnum::Int,chan_select)
+function set_channel_select(boardnum::Int,chan_select::Int)
     ccall((:SelectAdcChannels,libacqsynth),Void,(Cshort,Cint),boardnum,chan_select)
 end
 
@@ -248,7 +272,7 @@ julia> chan_select = get_channel_select(boardnum,chan_mode,chan_select)
 ```
 """
 function get_channel_select(boardnum::Int)
-    ccall((:GetChannelSelectValue,libacqsynth),Int,(Cshort,),boardnum)
+    return ccall((:GetChannelSelectValue,libacqsynth),Int,(Cshort,),boardnum)
 end
 
 """
@@ -338,12 +362,10 @@ function get_ECL_trigger_enable(boardnum::Int)
 end
 
 """
-    configure_waveform_trigger(boardnum, threshold, hysteresis=256)
+    set_waveform_trigger_params(boardnum, threshold, hysteresis=256)
 
-Configure waveform triggering. Do not forget to enable triggering with the
-set_trigger() function.
-
-Function valid only for AD14 and AD16 boards.
+Configure waveform triggering parameters. Do not forget to enable triggering
+with the set_trigger() function.
 
 Note that this function requires the board to have been set up with the
 setup_board() function.
@@ -361,15 +383,35 @@ setup_board() function.
 julia> boardnum = 2
 julia> threshold = 2^11 # middle value for a 12-bit board
 julia> hysteresis = 512 # estimated noise level * 3
-julia> configure_waveform_trigger(boardnum,threshold,hysteresis)
+julia> set_waveform_trigger_params(boardnum,threshold,hysteresis)
 julia> ttype = 1 # waveform trigger
 julia> slope = 1 # rising edge
 julia> channel = 0 # channel IN0
 julia> set_trigger(boardnum,ttype,slope,channel)
 ```
 """
-function configure_waveform_trigger(boardnum::Int, threshold::Int, hysteresis::Int=256)
+function set_waveform_trigger_params(boardnum::Int, threshold::Int, hysteresis::Int=256)
     ccall((:ConfigureWaveformTrigger,libacqsynth),Void,(Cshort,Cint,Cint),boardnum,threshold,hysteresis)
+end
+
+"""
+    get_waveform_trigger_params(boardnum)
+
+Return the current waveform trigger threshold and hysteresis values.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> (threshold, hysteresis) = get_waveform_trigger_params(boardnum)
+```
+"""
+function get_waveform_trigger_params(boardnum::Int)
+    threshold  = ccall((:GetWaveformThresholdValue,libacqsynth),Cint,(Cshort,),boardnum)
+    hysteresis = ccall((:GetWaveformHysteresisValue,libacqsynth),Cint,(Cshort,),boardnum)
+    return (threshold, hysteresis)
 end
 
 """
@@ -377,8 +419,6 @@ end
 
 Set the trigger type. If a waveform trigger is desired, it must be configured
 prealably with the configure_waveform_trigger() function.
-
-Function valid only for AD14 and AD16 boards.
 
 Note that this function requires the board to have been set up with the
 setup_board() function.
@@ -411,8 +451,6 @@ end
 Return the trigger type. Returns 0 for NO_TRIGGER, 1 for WAVEFORM_TRIGGER, 2
 for SYNC_SELECTIVE_RECORDING, 3 for HETERODYNE or 4 for TTL_TRIGGER_EDGE.
 
-Function valid only for AD14 and AD16 boards.
-
 Note that this function requires the board to have been set up with the
 setup_board() function.
 
@@ -426,14 +464,48 @@ function get_trigger(boardnum::Int)
     return ccall((:IsTriggerEnabled,libacqsynth),Cint,(Cshort,),boardnum)
 end
 
+"""
+    set_pretrigger_mem(boardnum, samples)
+
+Set the number of samples to be recorded prior to  thetrigger. Can be between 0
+and 4095.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> set_pretrigger_mem(boardnum,500)
+```
+"""
+function set_pretrigger_mem(boardnum::Int, samples::Int)
+    ccall((:SetPreTriggerMemory,libacqsynth),Void,(Cshort,Cint),boardnum,samples)
+end
+
+"""
+    get_pretrigger_mem(boardnum)
+
+Return the number of samples to be recorded prior to the trigger.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> get_pretrigger_mem(boardnum)
+```
+"""
+function get_pretrigger_mem(boardnum::Int)
+    ccall((:GetPretriggerValue,libacqsynth),Cint,(Cshort,),boardnum)
+end
 
 """
     set_decimation(boardnum, deci_value)
 
-Sets ADC decimation (return a sample every "deci_value" samples only).
-"deci_value" should be 1, 2, 4 or 8.
-
-Function valid only for AD12 and AD8 boards.
+Set ADC decimation (return a sample every "deci_value" samples only).
+"deci_value" should be 1, 2, 4 or 8. A value of 1 disables decimation.
 
 Note that this function requires the board to have been set up with the
 setup_board() function.
@@ -464,6 +536,107 @@ julia> deci_value = get_decimation(boardnum)
 """
 function get_decimation(boardnum::Int)
     return ccall((:GetDecimationValue,libacqsynth),Cint,(Cshort,),boardnum)
+end
+
+"""
+    set_segmented_capture(boardnum, count, depth)
+
+Configure the board for segmented capture operation. Note that averaging will be
+disabled. Set `count` to 0 to disable segmented capture.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Arguments
+* `boardnum::Integer`: index of installed board
+* `count::Integer`: number (0 to 2^32) of segments to acquire. Each segment's
+  starting amplitude is determined by the currently configured trigger. Set
+  `count` to 0 to disable segmented capture.
+* `depth::Integer`: number (0 to 2^32) of samples to acquire in each segment.
+  Note that the last segment will have as many samples as can fit in the rest of
+  the buffer.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> count = 2 # number of segments to acquire
+julia> depth = 1100 # number of samples per segment
+julia> set_segmented_capture(boardnum,count,depth)
+```
+"""
+function set_segmented_capture(boardnum::Int, count::Int, depth::Int)
+    ccall((:ConfigureSegmentedCapture,libacqsynth),Void,(Cshort,Cint,Cint,Cint),boardnum,count,depth,1)
+end
+
+"""
+    get_segmented_capture(boardnum)
+
+Return the segmented capture parameters.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> (count, depth) = get_segmented_capture(boardnum)
+```
+"""
+function get_segmented_capture(boardnum::Int)
+    count = ccall((:GetCaptureCountValue,libacqsynth),Cint,(Cshort,),boardnum)
+    depth = ccall((:GetCaptureDepthValue,libacqsynth),Cint,(Cshort,),boardnum)
+    return (count, depth)
+end
+
+
+"""
+    set_averager(boardnum, count, depth)
+
+Configure the board for averaging operation. Note that segmented capture will be
+disabled. Set `count` to 0 to disable averaging. Enabling the averager changes
+the output data format to 32-bit samples.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Arguments
+* `boardnum::Integer`: index of installed board
+* `count::Integer`: number (0 to 2^16-1) of segments to average over. Each
+  segment's starting amplitude is determined by the currently configured
+  trigger. Set `count` to 0 to disable averaging or to 1 for flow through.
+* `depth::Integer`: number (2^n, n from 3 to 17) of samples to acquire in each
+  segment.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> count = 2 # number of segments to average over
+julia> depth = 1100 # number of samples per segment
+julia> set_averager(boardnum,count,depth)
+```
+"""
+function set_averager(boardnum::Int, count::Int, depth::Int)
+    ccall((:ConfigureAverager,libacqsynth),Void,(Cshort,Cint,Cint,Cint),boardnum,count,depth,1)
+end
+
+"""
+    get_averager(boardnum)
+
+Return the averager capture parameters.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> (count, depth) = get_averager(boardnum)
+```
+"""
+function get_averager(boardnum::Int)
+    count = ccall((:GetNumAveragesValue,libacqsynth),Cint,(Cshort,),boardnum)
+    depth = ccall((:GetAveragerLengthValue,libacqsynth),Cint,(Cshort,),boardnum)
+    return (count, depth)
 end
 
 """
@@ -508,7 +681,7 @@ end
 """
     mem_alloc()
 
-Allocate a 1Mbyte block of DMA page aligned memory.
+Allocate a 1 MiB (2^20 bytes) block of DMA page aligned memory.
 
 # Examples
 ```julia
@@ -516,19 +689,19 @@ julia> block = mem_alloc()
 ```
 """
 function mem_alloc()
-    out = Ref{Ptr{Cuchar}}()
-    if ccall((:x_MemAlloc,libacqsynth),Cint,(Ptr{Ptr{Cuchar}},Csize_t),out,DIG_BLOCK_SIZE)==1
+    addr = Ref{Ptr{Cuchar}}()
+    if ccall((:x_MemAlloc,libacqsynth),Cint,(Ptr{Ptr{Cuchar}},Csize_t),addr,DIG_BLOCK_SIZE)==1
         error("Failed to allocate block buffer!")
     end
-    block = unsafe_wrap(Array,out[],DIG_BLOCK_SIZE)
+    buffer = unsafe_wrap(Array,addr[],DIG_BLOCK_SIZE)
 end
 
 """
     mem_read()
 
-Read 1 block of data into a previously allocated array and clears it from the
-board memory. Call mem_read() repeatedly to transfer all the blocks that were
-acquired.
+Read 1 block of data into a buffer previously allocated by the mem_alloc()
+function and clears it from the board memory. Call mem_read() repeatedly to
+transfer all the blocks that were acquired.
 
 # Examples
 ```julia
@@ -537,8 +710,8 @@ julia> block = mem_alloc()
 julia> mem_read(boardnum,block)
 ```
 """
-function mem_read(boardnum,block)
-    ccall((:x_Read,libacqsynth),Void,(Cshort,Ptr{UInt8},Csize_t),boardnum,block,DIG_BLOCK_SIZE)
+function mem_read(boardnum::Int,buffer::Array{Cuchar,1})
+    ccall((:x_Read,libacqsynth),Void,(Cshort,Ptr{Cuchar},Csize_t),boardnum,buffer,DIG_BLOCK_SIZE)
 end
 
 """
@@ -553,6 +726,6 @@ julia> mem_free(block)
 julia> block = 0
 ```
 """
-function mem_free(block)
-    ccall((:x_FreeMem,libacqsynth),Void,(Ptr{Void},),block)
+function mem_free(buffer::Array{Cuchar,1})
+    ccall((:x_FreeMem,libacqsynth),Void,(Ptr{Cuchar},),buffer)
 end
