@@ -12,7 +12,7 @@ julia> get_num_boards()
 ```
 """
 function get_num_boards()
-    return ccall((:DllApiGetNumDevices,libacqsynth),Cshort,())
+    return ccall((:DllApiGetNumDevices,libacqsynth),Cint,())
 end
 
 """
@@ -34,7 +34,7 @@ function get_serial(boardnum::Int)
     isfile(joinpath(deps_dir,"get_usercode.svf")) || error("Make sure `get_usercode.svf` is in the `deps` directory.")
     # Make dll call
     serial = cd(deps_dir) do
-        ccall((:DllApiGetSerialNumber,libacqsynth),Cshort,(Cshort,),boardnum)
+        ccall((:DllApiGetSerialNumber,libacqsynth),Cint,(Cushort,),boardnum)
     end
     # Check if we got a valid serial
     serial==-1 && error("Make sure that the board number is valid!")
@@ -54,7 +54,7 @@ julia> set_setup_done_bit(boardnum)
 ```
 """
 function set_setup_done_bit(boardnum::Int)
-    ccall((:SetSetupDoneBit,libacqsynth),Void,(Cshort,Cshort),boardnum,0)
+    ccall((:SetSetupDoneBit,libacqsynth),Void,(Cushort,Cuint),boardnum,0)
 end
 
 """
@@ -76,7 +76,7 @@ function setup_board(boardnum::Int)
     isfile(joinpath(deps_dir,"ultra_config.dat")) || error("Make sure `ultra_config.dat` is in the `deps` directory.")
     # Make dll call
     success = cd(deps_dir) do
-        ccall((:SetupBoard,libacqsynth),Bool,(Cshort,),boardnum)
+        ccall((:SetupBoard,libacqsynth),Bool,(Cushort,),boardnum)
     end
     # Check if the setup worked
     success || error("The board for this board number is not properly installed!")
@@ -98,7 +98,7 @@ julia> is_AD12(boardnum)
 ```
 """
 function is_AD12(boardnum::Int)
-    return ccall((:is_adc12d2000,libacqsynth),Bool,(Cshort,),boardnum)
+    return ccall((:is_adc12d2000,libacqsynth),Bool,(Cushort,),boardnum)
 end
 
 """
@@ -116,7 +116,7 @@ julia> is_AD14(boardnum)
 ```
 """
 function is_AD14(boardnum::Int)
-    return ccall((:Is_ISLA214P,libacqsynth),Bool,(Cshort,),boardnum)
+    return ccall((:Is_ISLA214P,libacqsynth),Bool,(Cushort,),boardnum)
 end
 
 """
@@ -134,7 +134,7 @@ julia> is_AD16(boardnum)
 ```
 """
 function is_AD16(boardnum::Int)
-    return ccall((:is_ISLA216P,libacqsynth),Bool,(Cshort,),boardnum)
+    return ccall((:is_ISLA216P,libacqsynth),Bool,(Cushort,),boardnum)
 end
 
 """
@@ -152,7 +152,7 @@ julia> nchan = get_all_channels(boardnum)
 ```
 """
 function get_all_channels(boardnum::Int)
-    return ccall((:getAllChannels,libacqsynth),Cint,(Cshort,),boardnum)
+    return ccall((:getAllChannels,libacqsynth),Cuint,(Cushort,),boardnum)
 end
 
 """
@@ -171,7 +171,7 @@ julia> freq = get_frequency(boardnum)
 ```
 """
 function get_frequency(boardnum::Int)
-    return ccall((:AdcClockGetFreq,libacqsynth),Cint,(Cshort,),boardnum)
+    return ccall((:AdcClockGetFreq,libacqsynth),Cuint,(Cushort,),boardnum)
 end
 
 """
@@ -189,7 +189,7 @@ julia> res = get_adcresolution(boardnum)
 ```
 """
 function get_adcresolution(boardnum::Int)
-    return ccall((:GetAdcResolution,libacqsynth),Cint,(Cshort,),boardnum)
+    return ccall((:GetAdcResolution,libacqsynth),Cuint,(Cushort,),boardnum)
 end
 
 """
@@ -207,7 +207,7 @@ julia> mem = get_memsize(boardnum)
 ```
 """
 function get_memsize(boardnum::Int)
-    return ccall((:GetOnBoardMemorySize,libacqsynth),Cint,(Cshort,),boardnum)
+    return ccall((:GetOnBoardMemorySize,libacqsynth),Cuint,(Cushort,),boardnum)
 end
 
 """
@@ -225,7 +225,7 @@ julia> has_microsynth(boardnum)
 ```
 """
 function has_microsynth(boardnum::Int)
-    return ccall((:has_microsynth,libacqsynth),Bool,(Cshort,),boardnum)
+    return ccall((:has_microsynth,libacqsynth),Bool,(Cushort,),boardnum)
 end
 
 """
@@ -244,7 +244,7 @@ julia> nchan = get_num_channels(boardnum)
 ```
 """
 function get_num_channels(boardnum::Int)
-    return ccall((:getNumChannels,libacqsynth),Cint,(Cshort,),boardnum)
+    return ccall((:getNumChannels,libacqsynth),Cuint,(Cushort,),boardnum)
 end
 
 """
@@ -262,7 +262,7 @@ julia> set_clock(boardnum,CLOCK_INTERNAL)
 ```
 """
 function set_clock(boardnum::Int,clock::Int)
-    ccall((:SetInternalClockEnable,libacqsynth),Void,(Cshort,Cint),boardnum,clock)
+    ccall((:SetInternalClockEnable,libacqsynth),Void,(Cushort,Cuint),boardnum,clock)
 end
 
 """
@@ -280,7 +280,7 @@ julia> clock = get_clock(boardnum)
 ```
 """
 function get_clock(boardnum::Int)
-    return ccall((:GetInternalClockValue,libacqsynth),Cint,(Cshort,),boardnum)
+    return ccall((:GetInternalClockValue,libacqsynth),Cuint,(Cushort,),boardnum)
 end
 
 """
@@ -309,7 +309,7 @@ julia> set_channels(boardnum,chan_select)
 ```
 """
 function set_channels(boardnum::Int,chan_select::Int)
-    ccall((:SelectAdcChannels,libacqsynth),Void,(Cshort,Cint),boardnum,chan_select)
+    ccall((:SelectAdcChannels,libacqsynth),Void,(Cushort,Cuint),boardnum,chan_select)
 end
 
 """
@@ -327,7 +327,50 @@ julia> chan_select = get_channels(boardnum,chan_mode,chan_select)
 ```
 """
 function get_channels(boardnum::Int)
-    return ccall((:GetChannelSelectValue,libacqsynth),Int,(Cshort,),boardnum)
+    return ccall((:GetChannelSelectValue,libacqsynth),Cuint,(Cushort,),boardnum)
+end
+
+"""
+    set_ECL_trigger(boardnum, state)
+
+Enable (or disable) ECL trigger mode. Setting "state" to 1 enables
+the ECL trigger, 0 disables it. The board will be forced into reset, awaiting
+an external trigger.
+
+Function valid only for AD12 and AD8 boards.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> set_ECL_trigger(boardnum,1)
+```
+"""
+function set_ECL_trigger(boardnum::Int, state::Int)
+    ccall((:ECLTriggerEnable,libacqsynth),Void,(Cushort,Cuint),boardnum,state)
+end
+
+"""
+    get_ECL_trigger(boardnum)
+
+Get ECL trigger delay state. Returns 1 if the ECL trigger mode is enabled
+and 0 otherwise.
+
+Function valid only for AD12 and AD8 boards.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> state = get_ECL_trigger(boardnum,4)
+```
+"""
+function get_ECL_trigger(boardnum::Int)
+    return ccall((:GetECLTriggerEnableValue,libacqsynth),Cuint,(Cushort,),boardnum)
 end
 
 """
@@ -350,7 +393,7 @@ julia> set_ECL_trigger_delay(boardnum,4)
 ```
 """
 function set_ECL_trigger_delay(boardnum::Int, delay::Int)
-    ccall((:SET_ECL_TRIGGER_DELAY,libacqsynth),Void,(Cshort,Cint),boardnum,delay)
+    ccall((:SET_ECL_TRIGGER_DELAY,libacqsynth),Void,(Cushort,Cuint),boardnum,delay)
 end
 
 """
@@ -370,50 +413,7 @@ julia> delay = get_ECL_trigger_delay(boardnum,4)
 ```
 """
 function get_ECL_trigger_delay(boardnum::Int)
-    return ccall((:GetEclTriggerDelayValue,libacqsynth),Cint,(Cshort,),boardnum)
-end
-
-"""
-    set_ECL_trigger(boardnum, state)
-
-Enable (or disable) ECL trigger mode. Setting "state" to 1 enables
-the ECL trigger, 0 disables it. The board will be forced into reset, awaiting
-an external trigger.
-
-Function valid only for AD12 and AD8 boards.
-
-Note that this function requires the board to have been set up with the
-setup_board() function.
-
-# Examples
-```julia
-julia> boardnum = 2
-julia> set_ECL_trigger(boardnum,1)
-```
-"""
-function set_ECL_trigger(boardnum::Int, state::Int)
-    ccall((:ECLTriggerEnable,libacqsynth),Void,(Cshort,Cint),boardnum,state)
-end
-
-"""
-    get_ECL_trigger(boardnum)
-
-Get ECL trigger delay enable value. Refturns true if the ECL trigger is enabled
-and false otherwise.
-
-Function valid only for AD12 and AD8 boards.
-
-Note that this function requires the board to have been set up with the
-setup_board() function.
-
-# Examples
-```julia
-julia> boardnum = 2
-julia> enabled = get_ECL_trigger(boardnum,4)
-```
-"""
-function get_ECL_trigger(boardnum::Int)
-    return ccall((:GetECLTriggerEnableValue,libacqsynth),Int,(Cshort,),boardnum)
+    return ccall((:GetEclTriggerDelayValue,libacqsynth),Cuint,(Cushort,),boardnum)
 end
 
 """
@@ -446,7 +446,7 @@ julia> set_trigger(boardnum,ttype,slope,channel)
 ```
 """
 function set_waveform_trigger_params(boardnum::Int, threshold::Int, hysteresis::Int=256)
-    ccall((:ConfigureWaveformTrigger,libacqsynth),Void,(Cshort,Cint,Cint),boardnum,threshold,hysteresis)
+    ccall((:ConfigureWaveformTrigger,libacqsynth),Void,(Cushort,Cuint,Cuint),boardnum,threshold,hysteresis)
 end
 
 """
@@ -464,8 +464,8 @@ julia> (threshold, hysteresis) = get_waveform_trigger_params(boardnum)
 ```
 """
 function get_waveform_trigger_params(boardnum::Int)
-    threshold  = ccall((:GetWaveformThresholdValue,libacqsynth),Cint,(Cshort,),boardnum)
-    hysteresis = ccall((:GetWaveformHysteresisValue,libacqsynth),Cint,(Cshort,),boardnum)
+    threshold  = ccall((:GetWaveformThresholdValue,libacqsynth),Cuint,(Cushort,),boardnum)
+    hysteresis = ccall((:GetWaveformHysteresisValue,libacqsynth),Cuint,(Cushort,),boardnum)
     return (threshold, hysteresis)
 end
 
@@ -497,7 +497,7 @@ julia> set_trigger(boardnum,ttype,slope,channel)
 ```
 """
 function set_trigger(boardnum::Int, ttype::Int=0, slope::Int=0, channel=0)
-    ccall((:SelectTrigger,libacqsynth),Void,(Cshort,Cint,Cint,Cint),boardnum,ttype,slope,channel)
+    ccall((:SelectTrigger,libacqsynth),Void,(Cushort,Cuint,Cuint,Cuint),boardnum,ttype,slope,channel)
 end
 
 """
@@ -516,7 +516,7 @@ julia> trig_type = get_trigger(boardnum)
 ```
 """
 function get_trigger(boardnum::Int)
-    return ccall((:IsTriggerEnabled,libacqsynth),Cint,(Cshort,),boardnum)
+    return ccall((:IsTriggerEnabled,libacqsynth),Cuint,(Cushort,),boardnum)
 end
 
 """
@@ -535,7 +535,7 @@ julia> set_pretrigger_mem(boardnum,500)
 ```
 """
 function set_pretrigger_mem(boardnum::Int, samples::Int)
-    ccall((:SetPreTriggerMemory,libacqsynth),Void,(Cshort,Cint),boardnum,samples)
+    ccall((:SetPreTriggerMemory,libacqsynth),Void,(Cushort,Cuint),boardnum,samples)
 end
 
 """
@@ -553,7 +553,7 @@ julia> get_pretrigger_mem(boardnum)
 ```
 """
 function get_pretrigger_mem(boardnum::Int)
-    ccall((:GetPretriggerValue,libacqsynth),Cint,(Cshort,),boardnum)
+    ccall((:GetPretriggerValue,libacqsynth),Cuint,(Cushort,),boardnum)
 end
 
 """
@@ -572,7 +572,7 @@ julia> set_decimation(boardnum,8)
 ```
 """
 function set_decimation(boardnum::Int, deci_value::Int)
-    ccall((:SetAdcDecimation,libacqsynth),Void,(Cshort,Cint),boardnum,deci_value)
+    ccall((:SetAdcDecimation,libacqsynth),Void,(Cushort,Cuint),boardnum,deci_value)
 end
 
 """
@@ -590,7 +590,7 @@ julia> deci_value = get_decimation(boardnum)
 ```
 """
 function get_decimation(boardnum::Int)
-    return ccall((:GetDecimationValue,libacqsynth),Cint,(Cshort,),boardnum)
+    return ccall((:GetDecimationValue,libacqsynth),Cuint,(Cushort,),boardnum)
 end
 
 """
@@ -620,7 +620,7 @@ julia> set_segmented_capture(boardnum,count,depth)
 ```
 """
 function set_segmented_capture(boardnum::Int, count::Int, depth::Int)
-    ccall((:ConfigureSegmentedCapture,libacqsynth),Void,(Cshort,Cint,Cint,Cint),boardnum,count,depth,1)
+    ccall((:ConfigureSegmentedCapture,libacqsynth),Void,(Cushort,Cuint,Cuint,Cuint),boardnum,count,depth,1)
 end
 
 """
@@ -638,8 +638,8 @@ julia> (count, depth) = get_segmented_capture(boardnum)
 ```
 """
 function get_segmented_capture(boardnum::Int)
-    count = ccall((:GetCaptureCountValue,libacqsynth),Cint,(Cshort,),boardnum)
-    depth = ccall((:GetCaptureDepthValue,libacqsynth),Cint,(Cshort,),boardnum)
+    count = ccall((:GetCaptureCountValue,libacqsynth),Cuint,(Cushort,),boardnum)
+    depth = ccall((:GetCaptureDepthValue,libacqsynth),Cuint,(Cushort,),boardnum)
     return (count, depth)
 end
 
@@ -671,7 +671,7 @@ julia> set_averager(boardnum,count,depth)
 ```
 """
 function set_averager(boardnum::Int, count::Int, depth::Int)
-    ccall((:ConfigureAverager,libacqsynth),Void,(Cshort,Cint,Cint,Cint),boardnum,count,depth,1)
+    ccall((:ConfigureAverager,libacqsynth),Void,(Cushort,Cuint,Cuint,Cuint),boardnum,count,depth,1)
 end
 
 """
@@ -689,8 +689,8 @@ julia> (count, depth) = get_averager(boardnum)
 ```
 """
 function get_averager(boardnum::Int)
-    count = ccall((:GetNumAveragesValue,libacqsynth),Cint,(Cshort,),boardnum)
-    depth = ccall((:GetAveragerLengthValue,libacqsynth),Cint,(Cshort,),boardnum)
+    count = ccall((:GetNumAveragesValue,libacqsynth),Cuint,(Cushort,),boardnum)
+    depth = ccall((:GetAveragerLengthValue,libacqsynth),Cuint,(Cushort,),boardnum)
     return (count, depth)
 end
 
@@ -711,7 +711,7 @@ julia> setup_acquire(boardnum,numblocks)
 ```
 """
 function setup_acquire(boardnum::Int,numblocks::Int=1)
-    ccall((:setupAcquire,libacqsynth),Void,(Cshort,Cint),boardnum,numblocks)
+    ccall((:setupAcquire,libacqsynth),Void,(Cushort,Cuint),boardnum,numblocks)
 end
 
 """
@@ -747,7 +747,7 @@ julia> mem_read(boardnum,block)
 ```
 """
 function mem_read(boardnum::Int,buffer::Array{Cuchar,1})
-    ccall((:x_Read,libacqsynth),Void,(Cshort,Ptr{Cuchar},Csize_t),boardnum,buffer,DIG_BLOCK_SIZE)
+    ccall((:x_Read,libacqsynth),Void,(Cushort,Ptr{Cuchar},Csize_t),boardnum,buffer,DIG_BLOCK_SIZE)
 end
 
 """
