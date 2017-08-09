@@ -14,8 +14,8 @@ const IN3 = 8
 # Channel selection for AD12
 const AIN0     = 1 # Also called DESQ
 const AIN1     = 2 # Also called DESI
-const DESCLKIQ = 4 # Needs both inputs connected
-const DESIQ    = 8 # Needs both inputs connected
+const DESCLKIQ = 4 # Both inputs must be driven, I and Q are shorted together
+const DESIQ    = 8 # Both inputs must be driven, I and Q are separate, increasing input BW
 
 # Triggering options
 const NO_TRIGGER               = 0
