@@ -9,9 +9,9 @@ acq.init_board(boardnum)
 
 # Let's change to single channel mode
 chan = acq.AIN0
-acq.set_channel_select(boardnum,chan)
+acq.set_channels(boardnum,chan)
 # We can verify that this worked properly
-acq.get_channel_select(boardnum) == chan
+acq.get_channels(boardnum) == chan
 
 # Check the frequency, in single channel mode, this will be twice the normal
 acq.get_frequency(boardnum)

@@ -30,7 +30,7 @@ acq.get_frequency(boardnum)
 # At this point, without any other configuration we can start acquiring by
 # choosing how many 1MiB blocks we want and sending a soft trigger.
 # This is done with the setup_acquire() function.
-numblocks = 128 # let's grab a bunch of blocks
+numblocks = 4 # let's grab a bunch of blocks
 acq.setup_acquire(boardnum,numblocks) # acquisition starts here!
 
 # Grab the data from the card
@@ -42,3 +42,6 @@ data = reshape(data,2,:).'
 # Plot the stuff
 t = (0:size(data,1))/2E9 # time vector, we are sampling at 2GSPS
 plot(t[1:500],data[1:500,:]); legend(["AIN0","AIN1"]); grid(true)
+
+println(" AIN0: $(mean(data[:,1])) ± $(std(data[:,1]))")
+println(" AIN1: $(mean(data[:,2])) ± $(std(data[:,2]))")

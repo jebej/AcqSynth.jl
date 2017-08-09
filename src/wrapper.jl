@@ -248,7 +248,7 @@ function get_num_channels(boardnum::Int)
 end
 
 """
-    set_clock_select(boardnum,chan_select)
+    set_clock(boardnum,chan_select)
 
 Configure whether to use the CLOCK_INTERNAL, or CLOCK_EXTERNAL.
 
@@ -258,15 +258,15 @@ setup_board() function.
 # Examples
 ```julia
 julia> boardnum = 2
-julia> set_clock_select(boardnum,CLOCK_INTERNAL)
+julia> set_clock(boardnum,CLOCK_INTERNAL)
 ```
 """
-function set_clock_select(boardnum::Int,clock::Int)
+function set_clock(boardnum::Int,clock::Int)
     ccall((:SetInternalClockEnable,libacqsynth),Void,(Cshort,Cint),boardnum,clock)
 end
 
 """
-    get_clock_select(boardnum)
+    get_clock(boardnum)
 
 Return the clock being used, 1 for the internal clock, and 0 for the external.
 
@@ -276,15 +276,15 @@ setup_board() function.
 # Examples
 ```julia
 julia> boardnum = 2
-julia> clock = get_clock_select(boardnum)
+julia> clock = get_clock(boardnum)
 ```
 """
-function get_clock_select(boardnum::Int)
-    return ccall((:GetInternalClockValue,libacqsynth),Cint,(Cshort,Cint),boardnum,clock)
+function get_clock(boardnum::Int)
+    return ccall((:GetInternalClockValue,libacqsynth),Cint,(Cshort,),boardnum)
 end
 
 """
-    set_channel_select(boardnum,chan_select)
+    set_channels(boardnum,chan_select)
 
 Configure which channels to use for acquisition.
 
@@ -305,17 +305,17 @@ setup_board() function.
 ```julia
 julia> boardnum = 2
 julia> chan_select = IN0|IN1
-julia> set_channel_select(boardnum,chan_select)
+julia> set_channels(boardnum,chan_select)
 ```
 """
-function set_channel_select(boardnum::Int,chan_select::Int)
+function set_channels(boardnum::Int,chan_select::Int)
     ccall((:SelectAdcChannels,libacqsynth),Void,(Cshort,Cint),boardnum,chan_select)
 end
 
 """
-    get_channel_select(boardnum)
+    get_channels(boardnum)
 
-get_channel_select
+get_channels
 
 Note that this function requires the board to have been set up with the
 setup_board() function.
@@ -323,10 +323,10 @@ setup_board() function.
 # Examples
 ```julia
 julia> boardnum = 2
-julia> chan_select = get_channel_select(boardnum,chan_mode,chan_select)
+julia> chan_select = get_channels(boardnum,chan_mode,chan_select)
 ```
 """
-function get_channel_select(boardnum::Int)
+function get_channels(boardnum::Int)
     return ccall((:GetChannelSelectValue,libacqsynth),Int,(Cshort,),boardnum)
 end
 
@@ -374,9 +374,9 @@ function get_ECL_trigger_delay(boardnum::Int)
 end
 
 """
-    set_ECL_trigger_enable(boardnum, enable)
+    set_ECL_trigger(boardnum, state)
 
-Enables (or disables) ECL trigger mode. Setting "enable" to 1 enables
+Enable (or disable) ECL trigger mode. Setting "state" to 1 enables
 the ECL trigger, 0 disables it. The board will be forced into reset, awaiting
 an external trigger.
 
@@ -388,15 +388,15 @@ setup_board() function.
 # Examples
 ```julia
 julia> boardnum = 2
-julia> set_ECL_trigger_enable(boardnum,1)
+julia> set_ECL_trigger(boardnum,1)
 ```
 """
-function set_ECL_trigger_enable(boardnum::Int, enable::Int)
-    ccall((:ECLTriggerEnable,libacqsynth),Void,(Cshort,Cint),boardnum,enable)
+function set_ECL_trigger(boardnum::Int, state::Int)
+    ccall((:ECLTriggerEnable,libacqsynth),Void,(Cshort,Cint),boardnum,state)
 end
 
 """
-    get_ECL_trigger_enable(boardnum)
+    get_ECL_trigger(boardnum)
 
 Get ECL trigger delay enable value. Refturns true if the ECL trigger is enabled
 and false otherwise.
@@ -409,10 +409,10 @@ setup_board() function.
 # Examples
 ```julia
 julia> boardnum = 2
-julia> enabled = get_ECL_trigger_enable(boardnum,4)
+julia> enabled = get_ECL_trigger(boardnum,4)
 ```
 """
-function get_ECL_trigger_enable(boardnum::Int)
+function get_ECL_trigger(boardnum::Int)
     return ccall((:GetECLTriggerEnableValue,libacqsynth),Int,(Cshort,),boardnum)
 end
 

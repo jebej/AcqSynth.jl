@@ -5,5 +5,5 @@ CurrentModule = AcqSynth
 ```
 
 ```@docs
-set_channel_select
+set_channels
 ```

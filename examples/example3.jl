@@ -9,9 +9,9 @@ acq.init_board(boardnum)
 
 # Let's change to single channel mode
 chan = acq.AIN0
-acq.set_channel_select(boardnum,chan)
+acq.set_channels(boardnum,chan)
 # We can verify that this worked properly
-acq.get_channel_select(boardnum) == chan
+acq.get_channels(boardnum) == chan
 
 # Check the frequency, in single channel mode, this will be twice the normal
 acq.get_frequency(boardnum)
@@ -48,8 +48,8 @@ plot(t[1:1000],data[1:1000]); legend(["AIN0"]); grid(true)
 # # We can configure other things
 # # ECL trigger
 # acq.get_ECL_trigger_delay(boardnum)
-# acq.get_ECL_trigger_enable(boardnum)
-# acq.set_ECL_trigger_enable(boardnum,0)
+# acq.get_ECL_trigger(boardnum)
+# acq.set_ECL_trigger(boardnum,0)
 # acq.set_ECL_trigger_delay(boardnum,512)
 # # Configure averager
 # count = 2^6 # number of segments to acquire
