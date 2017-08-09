@@ -44,7 +44,7 @@ end
 """
     set_setup_done_bit(boardnum)
 
-Clears the setupDone flag, forcing subsequent calls to setup_board() to perform
+Clear the setupDone flag, forcing subsequent calls to setup_board() to perform
 a full calibration.
 
 # Examples
@@ -138,6 +138,79 @@ function is_AD16(boardnum::Int)
 end
 
 """
+    get_all_channels(boardnum)
+
+Returns the number of available channels on the ADC.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> nchan = get_all_channels(boardnum)
+```
+"""
+function get_all_channels(boardnum::Int)
+    return ccall((:getAllChannels,libacqsynth),Cint,(Cshort,),boardnum)
+end
+
+"""
+    get_frequency(boardnum)
+
+Return the effective sampling frequency. This is a rough measurement based on
+the PCIe reference clock.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> freq = get_frequency(boardnum)
+```
+"""
+function get_frequency(boardnum::Int)
+    return ccall((:AdcClockGetFreq,libacqsynth),Cint,(Cshort,),boardnum)
+end
+
+"""
+    get_adcresolution(boardnum)
+
+Return the resolution of the ADC on the board.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> res = get_adcresolution(boardnum)
+```
+"""
+function get_adcresolution(boardnum::Int)
+    return ccall((:GetAdcResolution,libacqsynth),Cint,(Cshort,),boardnum)
+end
+
+"""
+    get_memsize(boardnum)
+
+Return the size of the digitizer's on-board memory.
+
+Note that this function requires the board to have been set up with the
+setup_board() function.
+
+# Examples
+```julia
+julia> boardnum = 2
+julia> mem = get_memsize(boardnum)
+```
+"""
+function get_memsize(boardnum::Int)
+    return ccall((:GetOnBoardMemorySize,libacqsynth),Cint,(Cshort,),boardnum)
+end
+
+"""
     has_microsynth(boardnum)
 
 Return true if the board has a microsynth, fasle otherwise.
@@ -172,24 +245,6 @@ julia> nchan = get_num_channels(boardnum)
 """
 function get_num_channels(boardnum::Int)
     return ccall((:getNumChannels,libacqsynth),Cint,(Cshort,),boardnum)
-end
-
-"""
-    get_all_channels(boardnum)
-
-Returns the number of available channels on the ADC.
-
-Note that this function requires the board to have been set up with the
-setup_board() function.
-
-# Examples
-```julia
-julia> boardnum = 2
-julia> nchan = get_all_channels(boardnum)
-```
-"""
-function get_all_channels(boardnum::Int)
-    return ccall((:getAllChannels,libacqsynth),Cint,(Cshort,),boardnum)
 end
 
 """
@@ -467,7 +522,7 @@ end
 """
     set_pretrigger_mem(boardnum, samples)
 
-Set the number of samples to be recorded prior to  thetrigger. Can be between 0
+Set the number of samples to be recorded prior to the trigger. Can be between 0
 and 4095.
 
 Note that this function requires the board to have been set up with the
@@ -637,25 +692,6 @@ function get_averager(boardnum::Int)
     count = ccall((:GetNumAveragesValue,libacqsynth),Cint,(Cshort,),boardnum)
     depth = ccall((:GetAveragerLengthValue,libacqsynth),Cint,(Cshort,),boardnum)
     return (count, depth)
-end
-
-"""
-    get_frequency(boardnum)
-
-Return the effective sampling frequency. This is a rough measurement based on
-the PCIe reference clock.
-
-Note that this function requires the board to have been set up with the
-setup_board() function.
-
-# Examples
-```julia
-julia> boardnum = 2
-julia> freq = get_frequency(boardnum)
-```
-"""
-function get_frequency(boardnum::Int)
-    return ccall((:AdcClockGetFreq,libacqsynth),Cint,(Cshort,),boardnum)
 end
 
 """

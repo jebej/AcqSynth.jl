@@ -5,11 +5,13 @@ function list_boards()
     numboards == 0 && error("No boards found!")
     for n = 0:numboards-1
         setup_board(n)
-        println("Board $n")
+        println("=> Board $n")
         model = is_AD12(n) ? "AD12" : is_AD14(n) ? "AD14" : is_AD16(n) ? "AD16" : "unknown"
         println("  model:      $model")
         println("  serial:     $(get_serial(n))")
         println("  frequency:  $(get_frequency(n)) MHz")
+        println("  resolution: $(get_adcresolution(n))-bit")
+        println("  memory:     $(get_memsize(n)) MiB")
         println("  channels:   $(get_all_channels(n))")
         println("  microsynth: $(has_microsynth(n) ? "yes" : "no")")
     end
