@@ -6,7 +6,7 @@
 Return the number of Ultraview boards connected to the PC.
 
 # Examples
-```julia
+```julia-repl
 julia> get_num_boards()
 1
 ```
@@ -20,13 +20,13 @@ end
 
 Return the serial number of the chosen board.
 
-Note that the DLL function requires "get_usercode.svf" to be in the current
-directory when it is executed.
+Note that the DLL function requires "get_usercode.svf" to be in the current directory when it is executed.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 0
 julia> get_serial(boardnum)
+1092
 ```
 """
 function get_serial(boardnum::Int)
@@ -42,34 +42,28 @@ function get_serial(boardnum::Int)
 end
 
 """
-    set_setup_done_bit(boardnum)
+    clear_setupdone_bit(boardnum)
 
-Clear the setupDone flag, forcing subsequent calls to setup_board() to perform
-a full calibration.
+Clear the `setupDone` flag, forcing the following call to [`setup_board`](@ref) to perform a full calibration.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> set_setup_done_bit(boardnum)
+julia> clear_setupdone_bit(boardnum)
 ```
 """
-function set_setup_done_bit(boardnum::Int)
+function clear_setupdone_bit(boardnum::Int)
     ccall((:SetSetupDoneBit,libacqsynth),Void,(Cushort,Cuint),boardnum,0)
 end
 
 """
     setup_board(boardnum)
 
-Read from `ultra_config.dat`, initialize and calibrate the board. Should be
-called to set the board to a known state at the beginning of an application.
+Read from `ultra_config.dat`, initialize and calibrate the board. Should be called to set the board to a known state at the beginning of an application.
 
-Note: Call set_setup_done_bit() before calling setup_board() to force a full
-calibration and setup. The first time the board is operated, the setupDone bit
-is false, and the board undergoes a complete calibration when setup_board() is
-called. Subsequently, only mimimal configuration is performed.
+Note: Call [`clear_setupdone_bit`](@ref) before calling [`setup_board`](@ref) to force a full calibration and setup. The first time the board is operated, the `setupDone` bit is false, and the board undergoes a complete calibration when [`setup_board`](@ref) is called. Subsequently, only mimimal configuration is performed.
 
-Also note that the DLL function requires the `ultra_config.dat` file to be in
-the working directory when it is executed.
+Also note that the DLL function requires the `ultra_config.dat` file to be in the working directory when it is executed.
 """
 function setup_board(boardnum::Int)
     # Make sure that the "ultra_config.dat" file exists
@@ -88,13 +82,13 @@ end
 
 Return true if the board is a model AD12, false otherwise.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> is_AD12(boardnum)
+true
 ```
 """
 function is_AD12(boardnum::Int)
@@ -106,13 +100,13 @@ end
 
 Return true if the board is a model AD14, false otherwise.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> is_AD14(boardnum)
+false
 ```
 """
 function is_AD14(boardnum::Int)
@@ -124,13 +118,13 @@ end
 
 Return true if the board is a model AD16, false otherwise.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> is_AD16(boardnum)
+false
 ```
 """
 function is_AD16(boardnum::Int)
@@ -142,13 +136,13 @@ end
 
 Returns the number of available channels on the ADC.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> nchan = get_all_channels(boardnum)
+julia> println(get_all_channels(boardnum))
+2
 ```
 """
 function get_all_channels(boardnum::Int)
@@ -158,16 +152,15 @@ end
 """
     get_frequency(boardnum)
 
-Return the effective sampling frequency. This is a rough measurement based on
-the PCIe reference clock.
+Return the effective sampling frequency in MHz. This is a rough measurement based on the PCIe reference clock.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> freq = get_frequency(boardnum)
+julia> println(get_frequency(boardnum)) # in MHz
+1998
 ```
 """
 function get_frequency(boardnum::Int)
@@ -177,15 +170,15 @@ end
 """
     get_adcresolution(boardnum)
 
-Return the resolution of the ADC on the board.
+Return the bit resolution of the ADC on the board.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> res = get_adcresolution(boardnum)
+julia> println(get_adcresolution(boardnum)) # in bits
+12
 ```
 """
 function get_adcresolution(boardnum::Int)
@@ -195,15 +188,15 @@ end
 """
     get_memsize(boardnum)
 
-Return the size of the digitizer's on-board memory.
+Return the size of the digitizer's on-board memory in MiB.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> mem = get_memsize(boardnum)
+julia> println(get_memsize(boardnum)) # in MiB
+8192
 ```
 """
 function get_memsize(boardnum::Int)
@@ -213,15 +206,15 @@ end
 """
     has_microsynth(boardnum)
 
-Return true if the board has a microsynth, fasle otherwise.
+Return true if the board has a microsynth, false otherwise. If the board does have a microsynth, it can be used to program the frequency of the ADC.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> has_microsynth(boardnum)
+false
 ```
 """
 function has_microsynth(boardnum::Int)
@@ -231,16 +224,15 @@ end
 """
     get_num_channels(boardnum)
 
-Returns the number of channels configured for acquisition. Used to help decode
-buffer data. See get_sample<nn> helper functions.
+Returns the number of channels configured for acquisition. Used to help decode buffer data. See get_sample<nn> helper functions.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> nchan = get_num_channels(boardnum)
+julia> println(get_num_channels(boardnum))
+1
 ```
 """
 function get_num_channels(boardnum::Int)
@@ -250,18 +242,17 @@ end
 """
     set_clock(boardnum,chan_select)
 
-Configure whether to use the CLOCK_INTERNAL, or CLOCK_EXTERNAL.
+Configure whether to use the `CLOCK_INTERNAL`, or `CLOCK_EXTERNAL`.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> set_clock(boardnum,CLOCK_INTERNAL)
 ```
 """
-function set_clock(boardnum::Int,clock::Int)
+function set_clock(boardnum::Int, clock::Int)
     ccall((:SetInternalClockEnable,libacqsynth),Void,(Cushort,Cuint),boardnum,clock)
 end
 
@@ -270,13 +261,13 @@ end
 
 Return the clock being used, 1 for the internal clock, and 0 for the external.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> clock = get_clock(boardnum)
+julia> println(get_clock(boardnum))
+1
 ```
 """
 function get_clock(boardnum::Int)
@@ -284,46 +275,41 @@ function get_clock(boardnum::Int)
 end
 
 """
-    set_channels(boardnum,chan_select)
+    set_channels(boardnum, chan_select)
 
 Configure which channels to use for acquisition.
 
-For AD14 or AD16 boards, chan_select should be the bitwise OR of the desired
-channels IN0, IN1, IN2, and IN3.
+For AD14 or AD16 boards, `chan_select` should be the bitwise OR of the desired channels `IN0`, `IN1`, `IN2`, and `IN3`.
 
-For AD12 boards, select either the bitwise OR of the desired channels AIN0 and
-AIN1, or DESCLKIQ for DESCLKIQ mode, or DESIQ for DESIQ mode.
+For AD12 boards, select either the bitwise OR of the desired channels `AIN0` and `AIN1`, or `DESCLKIQ` for DESCLKIQ mode, or `DESIQ` for DESIQ mode.
 
-In DESCLKIQ mode, the I- and Q- inputs remain electrically separate, increasing
-input bandwidth. In DESIQ, the I- and Q- inputs are shorted together. In either
-of these modes, both inputs must be externally driven.
+In DESCLKIQ mode, the I- and Q- inputs remain electrically separate, increasing input bandwidth. In DESIQ, the I- and Q- inputs are shorted together. In either of these modes, both inputs must be externally driven.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> chan_select = IN0|IN1
 julia> set_channels(boardnum,chan_select)
 ```
 """
-function set_channels(boardnum::Int,chan_select::Int)
+function set_channels(boardnum::Int, chan_select::Int)
     ccall((:SelectAdcChannels,libacqsynth),Void,(Cushort,Cuint),boardnum,chan_select)
 end
 
 """
     get_channels(boardnum)
 
-get_channels
+Return the current channel setup. See the [`set_channels`](@ref) function for details.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> chan_select = get_channels(boardnum,chan_mode,chan_select)
+julia> get_channels(boardnum) # channels previously set to IN0|IN1
+3
 ```
 """
 function get_channels(boardnum::Int)
@@ -333,17 +319,14 @@ end
 """
     set_ECL_trigger(boardnum, state)
 
-Enable (or disable) ECL trigger mode. Setting "state" to 1 enables
-the ECL trigger, 0 disables it. The board will be forced into reset, awaiting
-an external trigger.
+Enable (or disable) ECL trigger mode. Setting `state` to 1 enables the ECL trigger, 0 disables it. The board will be forced into reset, awaiting an external trigger.
 
 Function valid only for AD12 and AD8 boards.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> set_ECL_trigger(boardnum,1)
 ```
@@ -360,13 +343,13 @@ and 0 otherwise.
 
 Function valid only for AD12 and AD8 boards.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> state = get_ECL_trigger(boardnum,4)
+julia> println(get_ECL_trigger(boardnum,4))
+0
 ```
 """
 function get_ECL_trigger(boardnum::Int)
@@ -376,18 +359,14 @@ end
 """
     set_ECL_trigger_delay(boardnum, delay)
 
-Sets a delay after the ECL trigger goes from zero to one before data begins
-acquiring. "delay" should be the delay in DCLK cycles (ADC outputs
-data in four 12-bit words/DCLK cycle). In single channel mode there are 4
-samples per DCLK. In two channel mode, there are 2 samples per DCLK.
+Sets a delay after the ECL trigger goes from zero to one before data begins acquiring. `delay` should be the delay in DCLK cycles (ADC outputs data in four 12-bit words/DCLK cycle). In single channel mode there are 4 samples per DCLK. In two channel mode, there are 2 samples per DCLK.
 
 Function valid only for AD12 and AD8 boards.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> set_ECL_trigger_delay(boardnum,4)
 ```
@@ -403,13 +382,13 @@ Get ECL trigger delay value.
 
 Function valid only for AD12 and AD8 boards.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> delay = get_ECL_trigger_delay(boardnum,4)
+julia> println(get_ECL_trigger_delay(boardnum,4))
+512
 ```
 """
 function get_ECL_trigger_delay(boardnum::Int)
@@ -419,29 +398,27 @@ end
 """
     set_waveform_trigger_params(boardnum, threshold, hysteresis=256)
 
-Configure waveform triggering parameters. Do not forget to enable triggering
-with the set_trigger() function.
+Configure waveform triggering parameters. Do not forget to enable triggering with the [`set_trigger`](@ref) function.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Arguments
 * `boardnum::Integer`: index of installed board
 * `threshold::Integer`: trigger treshold, choose a value between 0 and your ADC
-  maximum value (eg, 2^16-1 for a 16-bit board).
+    maximum value (eg, 2^16-1 for a 16-bit board).
 * `hysteresis::Integer`: this value should typically be a few times the noise
-  amplitude of your signal, choose a value between 0 and your ADC maximum value
-  (eg, 2^16-1 for a 16-bit board).
+    amplitude of your signal, choose a value between 0 and your ADC maximum value
+    (eg, 2^16-1 for a 16-bit board).
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> threshold = 2^11 # middle value for a 12-bit board
 julia> hysteresis = 512 # estimated noise level * 3
 julia> set_waveform_trigger_params(boardnum,threshold,hysteresis)
 julia> ttype = 1 # waveform trigger
 julia> slope = 1 # rising edge
-julia> channel = 0 # channel IN0
+julia> channel = IN0 # channel IN0
 julia> set_trigger(boardnum,ttype,slope,channel)
 ```
 """
@@ -454,13 +431,14 @@ end
 
 Return the current waveform trigger threshold and hysteresis values.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> (threshold, hysteresis) = get_waveform_trigger_params(boardnum)
+julia> println("treshold: \$threshold, hysteresis: \$hysteresis")
+treshold: 2048, hysteresis: 512
 ```
 """
 function get_waveform_trigger_params(boardnum::Int)
@@ -472,23 +450,21 @@ end
 """
     set_trigger(boardnum, ttype, slope, channel)
 
-Set the trigger type. If a waveform trigger is desired, it must be configured
-prealably with the configure_waveform_trigger() function.
+Set the trigger type. If a waveform trigger is desired, it must be configured prealably with the `[configure_waveform_trigger]`(@ref) function.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Arguments
 * `boardnum::Integer`: index of installed board
-* `ttype::Integer`: trigger type, choose between NO_TRIGGER (0),
-  WAVEFORM_TRIGGER (1), SYNC_SELECTIVE_RECORDING (2), HETERODYNE (3) or
-  TTL_TRIGGER_EDGE (4).
-* `slope::Integer`: select whether to trigger on a FALLING_EDGE (0) or a
-  RISING_EDGE (1).
+* `ttype::Integer`: trigger type, choose between `NO_TRIGGER` (0),
+    `WAVEFORM_TRIGGER` (1), `SYNC_SELECTIVE_RECORDING` (2), `HETERODYNE` (3) or
+    `TTL_TRIGGER_EDGE` (4).
+* `slope::Integer`: select whether to trigger on a `FALLING_EDGE` (0) or a
+    `RISING_EDGE` (1).
 * 'channel::Int': channel to trigger on
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> ttype = 4 # TTL trigger
 julia> slope = 1 # rising edge
@@ -503,16 +479,15 @@ end
 """
     get_trigger(boardnum)
 
-Return the trigger type. Returns 0 for NO_TRIGGER, 1 for WAVEFORM_TRIGGER, 2
-for SYNC_SELECTIVE_RECORDING, 3 for HETERODYNE or 4 for TTL_TRIGGER_EDGE.
+Return the trigger type. Returns 0 for `NO_TRIGGER`, 1 for `WAVEFORM_TRIGGER`, 2 for `SYNC_SELECTIVE_RECORDING`, 3 for `HETERODYNE` or 4 for `TTL_TRIGGER_EDGE`.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> trig_type = get_trigger(boardnum)
+julia> println(get_trigger(boardnum))
+1
 ```
 """
 function get_trigger(boardnum::Int)
@@ -522,14 +497,12 @@ end
 """
     set_pretrigger_mem(boardnum, samples)
 
-Set the number of samples to be recorded prior to the trigger. Can be between 0
-and 4095.
+Set the number of samples to be recorded prior to the trigger. Can be between 0 and 4095.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> set_pretrigger_mem(boardnum,500)
 ```
@@ -543,13 +516,13 @@ end
 
 Return the number of samples to be recorded prior to the trigger.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> get_pretrigger_mem(boardnum)
+julia> println(get_pretrigger_mem(boardnum))
+128
 ```
 """
 function get_pretrigger_mem(boardnum::Int)
@@ -559,14 +532,12 @@ end
 """
     set_decimation(boardnum, deci_value)
 
-Set ADC decimation (return a sample every "deci_value" samples only).
-"deci_value" should be 1, 2, 4 or 8. A value of 1 disables decimation.
+Set ADC decimation (return a sample every `deci_value` samples only). `deci_value` should be 1, 2, 4 or 8. A value of 1 disables decimation.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> set_decimation(boardnum,8)
 ```
@@ -580,13 +551,13 @@ end
 
 Return the decimation value.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
-julia> deci_value = get_decimation(boardnum)
+julia> println(get_decimation(boardnum))
+8
 ```
 """
 function get_decimation(boardnum::Int)
@@ -596,23 +567,21 @@ end
 """
     set_segmented_capture(boardnum, count, depth)
 
-Configure the board for segmented capture operation. Note that averaging will be
-disabled. Set `count` to 0 to disable segmented capture.
+Configure the board for segmented capture operation. Note that averaging will be disabled. Set `count` to 0 to disable segmented capture.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Arguments
 * `boardnum::Integer`: index of installed board
-* `count::Integer`: number (0 to 2^32) of segments to acquire. Each segment's
-  starting amplitude is determined by the currently configured trigger. Set
-  `count` to 0 to disable segmented capture.
-* `depth::Integer`: number (0 to 2^32) of samples to acquire in each segment.
-  Note that the last segment will have as many samples as can fit in the rest of
-  the buffer.
+* `count::Integer`: number (0 to 2^32-1) of segments to acquire. Each segment's
+    starting amplitude is determined by the currently configured trigger. Set
+    `count` to 0 to disable segmented capture.
+* `depth::Integer`: number (0 to 2^32-1) of samples to acquire in each segment.
+    Note that the last segment will have as many samples as can fit in the rest of
+    the buffer.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> count = 2 # number of segments to acquire
 julia> depth = 1100 # number of samples per segment
@@ -626,13 +595,12 @@ end
 """
     get_segmented_capture(boardnum)
 
-Return the segmented capture parameters.
+Return the segmented capture parameters. See [`set_segmented_capture`](@ref) for details.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> (count, depth) = get_segmented_capture(boardnum)
 ```
@@ -647,23 +615,20 @@ end
 """
     set_averager(boardnum, count, depth)
 
-Configure the board for averaging operation. Note that segmented capture will be
-disabled. Set `count` to 0 to disable averaging. Enabling the averager changes
-the output data format to 32-bit samples.
+Configure the board for averaging operation. Note that segmented capture will be disabled. Set `count` to 0 to disable averaging. Enabling the averager changes the output data format to 32-bit samples.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Arguments
 * `boardnum::Integer`: index of installed board
 * `count::Integer`: number (0 to 2^16-1) of segments to average over. Each
-  segment's starting amplitude is determined by the currently configured
-  trigger. Set `count` to 0 to disable averaging or to 1 for flow through.
+    segment's starting amplitude is determined by the currently configured
+    trigger. Set `count` to 0 to disable averaging or to 1 for flow through.
 * `depth::Integer`: number (2^n, n from 3 to 17) of samples to acquire in each
-  segment.
+    segment.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> count = 2 # number of segments to average over
 julia> depth = 1100 # number of samples per segment
@@ -677,13 +642,12 @@ end
 """
     get_averager(boardnum)
 
-Return the averager capture parameters.
+Return the averager capture parameters. See [`set_averager`](@ref) for details.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> (count, depth) = get_averager(boardnum)
 ```
@@ -695,22 +659,20 @@ function get_averager(boardnum::Int)
 end
 
 """
-    setup_acquire(boardnum,numblocks=1)
+    setup_acquire(boardnum, numblocks=1)
 
-Set up the board to acquire numblocks and wait for trigger. If no trigger was
-set up, the board will start acquiring immediately.
+Set up the board to acquire numblocks and wait for trigger. If no trigger was set up, the board will start acquiring immediately.
 
-Note that this function requires the board to have been set up with the
-setup_board() function.
+Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> numblocks = 32 # acquire 32 1MB blocks
 julia> setup_acquire(boardnum,numblocks)
 ```
 """
-function setup_acquire(boardnum::Int,numblocks::Int=1)
+function setup_acquire(boardnum::Int, numblocks::Int=1)
     ccall((:setupAcquire,libacqsynth),Void,(Cushort,Cuint),boardnum,numblocks)
 end
 
@@ -720,7 +682,7 @@ end
 Allocate a 1 MiB (2^20 bytes) block of DMA page aligned memory.
 
 # Examples
-```julia
+```julia-repl
 julia> block = mem_alloc()
 ```
 """
@@ -733,33 +695,31 @@ function mem_alloc()
 end
 
 """
-    mem_read()
+    mem_read(boardnum, block)
 
-Read 1 block of data into a buffer previously allocated by the mem_alloc()
-function and clears it from the board memory. Call mem_read() repeatedly to
-transfer all the blocks that were acquired.
+Read 1 block of data into a buffer previously allocated by the [`mem_alloc`](@ref) function and clears it from the board memory. Call [`mem_read`](@ref) repeatedly to transfer all the blocks that were acquired.
 
 # Examples
-```julia
+```julia-repl
 julia> boardnum = 2
 julia> block = mem_alloc()
 julia> mem_read(boardnum,block)
 ```
 """
-function mem_read(boardnum::Int,buffer::Array{Cuchar,1})
+function mem_read(boardnum::Int, buffer::Array{Cuchar,1})
     ccall((:x_Read,libacqsynth),Void,(Cushort,Ptr{Cuchar},Csize_t),boardnum,buffer,DIG_BLOCK_SIZE)
 end
 
 """
-    mem_free()
+    mem_free(block)
 
-Free the memory block allocated by mem_alloc(). Note that the variable used to
-reference to the block should be assigned to something else for safety.
+Free the memory block allocated by [`mem_alloc`](@ref). Note that the variable used to reference to the block should be assigned to something else for safety.
 
 # Examples
-```julia
+```julia-repl
 julia> mem_free(block)
 julia> block = 0
+0
 ```
 """
 function mem_free(buffer::Array{Cuchar,1})

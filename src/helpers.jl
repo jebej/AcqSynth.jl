@@ -19,7 +19,7 @@ end
 
 function init_board(boardnum::Int)
     # Force initialization and setup of the board
-    set_setup_done_bit(boardnum)
+    clear_setupdone_bit(boardnum)
     setup_board(boardnum)
 end
 

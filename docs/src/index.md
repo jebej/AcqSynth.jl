@@ -3,7 +3,3 @@
 ```@meta
 CurrentModule = AcqSynth
 ```
-
-```@docs
-set_channels
-```
