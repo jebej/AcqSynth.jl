@@ -29,26 +29,37 @@ function get_blocks(boardnum::Int,numblocks::Int)
 end
 
 function get_blocks!(blocks::Vector{UInt8},boardnum::Int,numblocks::Int)
-    for b = 1:numblocks
+    checkbounds(blocks,numblocks*DIG_BLOCK_SIZE)
+    @inbounds for b = 1:numblocks
         # Transfer 1 block from the board into the buffer
         mem_read(boardnum,BLOCK_BUFFER)
         # Save that block
-        @inbounds blocks[(b-1)*DIG_BLOCK_SIZE+1:b*DIG_BLOCK_SIZE] = BLOCK_BUFFER
+        blocks[(b-1)*DIG_BLOCK_SIZE+1:b*DIG_BLOCK_SIZE] = BLOCK_BUFFER
     end
     return blocks
 end
 
-function get_samples12(blocks::Vector{UInt8})
+function get_samples_12(boardnum::Int,numblocks::Int)
+    blocks = get_blocks(boardnum,numblocks)
+    return reinterpret_samples_12!(blocks)
+end
+
+function get_samples_32(boardnum::Int,numblocks::Int)
+    blocks = get_blocks(boardnum,numblocks)
+    return reinterpret_samples_32!(blocks)
+end
+
+function reinterpret_samples_12!(blocks::Vector{UInt8})
     # To get the 12-bit samples, we recast to an array of UInt16 and keep only
     # the 12 least significant bits.
     samples = reinterpret(UInt16,blocks)
-    for n = 1:length(samples)
+    @inbounds for n = 1:length(samples)
         samples[n] = samples[n]&0x0fff
     end
     return samples
 end
 
-function get_samples32(blocks::Vector{UInt8})
+function reinterpret_samples_32!(blocks::Vector{UInt8})
     # To get the 32-bit samples, we simply recast to UInt32.
     return reinterpret(UInt32,blocks)
 end
