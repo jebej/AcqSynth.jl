@@ -636,6 +636,14 @@ julia> set_averager(boardnum,count,depth)
 ```
 """
 function set_averager(boardnum::Int, count::Int, depth::Int)
+	if count > 64 && is_AD12(boardnum)
+		count = 64
+		warn("Average count reduced to maximum of 64 for AD12 board!")
+	end
+	if depth > 2^14 && is_AD12(boardnum)
+		depth = 2^14
+		warn("Average depth reduced to maximum of 2^14 for AD12 board!")
+	end
     ccall((:ConfigureAverager,libacqsynth),Void,(Cushort,Cuint,Cuint,Cuint),boardnum,count,depth,1)
 end
 

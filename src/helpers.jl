@@ -17,6 +17,25 @@ function list_boards()
     end
 end
 
+function configure_for_ttl_triggering(boardnum;num_avg=0,avg_len=8192)
+    setup_board(boardnum)
+	set_clock(boardnum,1)
+	set_channels(boardnum,3)
+	set_trigger(boardnum,4,1)
+	# if num_avg == 0, averaging is disabled
+	set_averager(boardnum,num_avg,avg_len)
+end
+
+function configure_for_waveform_triggering(boardnum;ch=1,thresh=2^11,hyst=128,num_avg=0,avg_len=8192)
+    setup_board(boardnum)
+	set_clock(boardnum,1)
+	set_channels(boardnum,3)
+	set_trigger(boardnum,1,1,ch)
+	set_waveform_trigger_params(boardnum,thresh,hyst)
+	# if num_avg == 0, averaging is disabled
+	set_averager(boardnum,num_avg,avg_len)
+end
+
 function init_board(boardnum::Int)
     # Force initialization and setup of the board
     clear_setupdone_bit(boardnum)
@@ -44,6 +63,11 @@ function get_samples_12(boardnum::Int,numblocks::Int)
     return reinterpret_samples_12!(blocks)
 end
 
+function get_samples_16(boardnum::Int,numblocks::Int)
+    blocks = get_blocks(boardnum,numblocks)
+    return reinterpret_samples_16!(blocks)
+end
+
 function get_samples_32(boardnum::Int,numblocks::Int)
     blocks = get_blocks(boardnum,numblocks)
     return reinterpret_samples_32!(blocks)
@@ -57,6 +81,11 @@ function reinterpret_samples_12!(blocks::Vector{UInt8})
         samples[n] = samples[n]&0x0fff
     end
     return samples
+end
+
+function reinterpret_samples_16!(blocks::Vector{UInt8})
+    # To get the 16-bit samples, we simply recast to UInt16.
+    return reinterpret(UInt16,blocks)
 end
 
 function reinterpret_samples_32!(blocks::Vector{UInt8})
