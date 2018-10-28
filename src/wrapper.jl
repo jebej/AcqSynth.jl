@@ -242,7 +242,7 @@ end
 """
     set_clock(boardnum,chan_select)
 
-Configure whether to use the `CLOCK_INTERNAL`, or `CLOCK_EXTERNAL`.
+Configure whether to use the `CLOCK_INTERNAL` (1), or `CLOCK_EXTERNAL` (0).
 
 Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
@@ -259,7 +259,7 @@ end
 """
     get_clock(boardnum)
 
-Return the clock being used, 1 for the internal clock, and 0 for the external.
+Return the clock being used, 1 for the internal clock, and 0 for the external clock.
 
 Note that this function requires the board to have been set up with the [`setup_board`](@ref) function.
 
@@ -461,18 +461,17 @@ Note that this function requires the board to have been set up with the [`setup_
     `TTL_TRIGGER_EDGE` (4).
 * `slope::Integer`: select whether to trigger on a `FALLING_EDGE` (0) or a
     `RISING_EDGE` (1).
-* 'channel::Int': channel to trigger on
+* `channel::Int`: channel to trigger on for analog triggering
 
 # Examples
 ```julia-repl
 julia> boardnum = 2
 julia> ttype = 4 # TTL trigger
 julia> slope = 1 # rising edge
-julia> channel = 4 # channel IN2
-julia> set_trigger(boardnum,ttype,slope,channel)
+julia> set_trigger(boardnum,ttype,slope)
 ```
 """
-function set_trigger(boardnum::Int, ttype::Int=0, slope::Int=0, channel=0)
+function set_trigger(boardnum::Int, ttype::Int=1, slope::Int=1, channel=1)
     ccall((:SelectTrigger,libacqsynth),Void,(Cushort,Cuint,Cuint,Cuint),boardnum,ttype,slope,channel)
 end
 
@@ -578,7 +577,7 @@ Note that this function requires the board to have been set up with the [`setup_
     `count` to 0 to disable segmented capture.
 * `depth::Integer`: number (0 to 2^32-1) of samples to acquire in each segment.
     Note that the last segment will have as many samples as can fit in the rest of
-    the buffer.
+    the buffer. Must be a multiple of 16.
 
 # Examples
 ```julia-repl
@@ -589,6 +588,14 @@ julia> set_segmented_capture(boardnum,count,depth)
 ```
 """
 function set_segmented_capture(boardnum::Int, count::Int, depth::Int)
+	if depth > 2^14 && is_AD12(boardnum)
+		depth = 2^14
+		warn("Segment depth reduced to maximum of 2^14 for AD12 board!")
+	end
+	if depth%16 != 0
+	    depth = min(2^14,cld(depth,16)*16)
+		warn("Segment depth set to a multiple of 16 (new depth: $depth)!")
+	end
     ccall((:ConfigureSegmentedCapture,libacqsynth),Void,(Cushort,Cuint,Cuint,Cuint),boardnum,count,depth,1)
 end
 
@@ -624,8 +631,8 @@ Note that this function requires the board to have been set up with the [`setup_
 * `count::Integer`: number (0 to 2^16-1) of segments to average over. Each
     segment's starting amplitude is determined by the currently configured
     trigger. Set `count` to 0 to disable averaging or to 1 for flow through.
-* `depth::Integer`: number (2^n, n from 3 to 17) of samples to acquire in each
-    segment.
+* `depth::Integer`: number of samples to acquire in each
+    segment, must be a multiple of 16.
 
 # Examples
 ```julia-repl
@@ -643,6 +650,10 @@ function set_averager(boardnum::Int, count::Int, depth::Int)
 	if depth > 2^14 && is_AD12(boardnum)
 		depth = 2^14
 		warn("Average depth reduced to maximum of 2^14 for AD12 board!")
+	end
+	if depth%16 != 0
+	    depth = min(2^14,cld(depth,16)*16)
+		warn("Average depth set to a multiple of 16 (new depth: $depth)!")
 	end
     ccall((:ConfigureAverager,libacqsynth),Void,(Cushort,Cuint,Cuint,Cuint),boardnum,count,depth,1)
 end
