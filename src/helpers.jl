@@ -42,7 +42,7 @@ function read_seg_samples_ddc4(boardnum,numblocks,seg_len,window,v_offset=0f0,v_
     # reads from the card and downconvert + average segments, and return as an
     # array of complex IQ points
     setup_acquire(boardnum,numblocks)
-    signal = (get_samples_12(numblocks) .* v_conv/2^12) .- v_conv/2 .- v_offset
+    signal = (get_samples_12(boardnum,numblocks) .* v_conv/2^12) .- v_conv/2 .- v_offset
     return average_seg_IQ(ddc4!(signal),seg_len,window)
 end
 
