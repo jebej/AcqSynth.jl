@@ -38,12 +38,20 @@ function configure_for_waveform_triggering(boardnum,clock=1,channels=3,trig_ch=1
 	set_averager(boardnum,num_avg,avg_len)
 end
 
-function read_seg_samples_ddc4(boardnum,numblocks,seg_len,window,v_offset=0f0,v_conv=0.350f0)
+function read_seg_samples_ddcn(boardnum,numblocks,n::Integer,seg_len,window,v_offset=0f0,v_conv=0.350f0)
     # reads from the card and downconvert + average segments, and return as an
     # array of complex IQ points
+	# n is the ratio of the sampling frequency to the IF, it must be an integer
     setup_acquire(boardnum,numblocks)
     signal = (get_samples_12(boardnum,numblocks) .* v_conv/2^12) .- v_conv/2 .- v_offset
-    return average_seg_IQ(ddc4!(signal),seg_len,window)
+	# choose ddc4 (fast method) if n == 4
+	if n == 4
+		baseband = ddc4!(signal)
+		seg_len = seg_len÷2 # particular to this method
+	else
+		baseband = ddcn(signal,n)
+	end
+	return average_seg_IQ(baseband,seg_len,window)
 end
 
 function init_board(boardnum::Int)
