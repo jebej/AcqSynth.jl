@@ -51,7 +51,7 @@ function read_seg_samples_ddcn(boardnum,numblocks,n::Integer,seg_len,window,v_of
 	else
 		baseband = ddcn(signal,n)
 	end
-	return average_seg_IQ(baseband,seg_len,window)
+	return average_IQ_seg(baseband,seg_len,window)
 end
 
 function init_board(boardnum::Int)
