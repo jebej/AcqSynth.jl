@@ -38,20 +38,36 @@ function configure_for_waveform_triggering(boardnum,clock=1,channels=3,trig_ch=1
 	set_averager(boardnum,num_avg,avg_len)
 end
 
-function read_seg_samples_ddcn(boardnum,numblocks,n::Integer,seg_len,window,v_offset=0f0,v_conv=0.350f0)
+function read_seg_samples_ddc(boardnum,numblocks,n::Integer,seg_len,window,v_offset=0f0,v_conv=0.350f0)
     # reads from the card and downconvert + average segments, and return as an
     # array of complex IQ points
-	# n is the ratio of the sampling frequency to the IF, it must be an integer
+    # n is the ratio of the sampling frequency to the IF, it must be an integer
     setup_acquire(boardnum,numblocks)
     signal = (get_samples_12(boardnum,numblocks) .* v_conv/2^12) .- v_conv/2 .- v_offset
-	# choose ddc4 (fast method) if n == 4
-	if n == 4
-		baseband = ddc4!(signal)
-		seg_len = seg_len÷2 # particular to this method
-	else
-		baseband = ddcn(signal,n)
-	end
-	return average_IQ_seg(baseband,seg_len,window)
+
+    if n > 4 # if needed, use decimating filter
+        signal_len = (length(signal)÷seg_len)*seg_len
+        rate = 1//(n÷4) # decimation rate
+        # create LPF FIR decimator object
+        h = convert(Vector{Float32},resample_filter(rate,1,20))
+        lpf = FIRFilter(h,rate)::FIRFilter{Filters.FIRDecimator{Float32}}
+        setphase!(lpf,timedelay(lpf))
+        req_zeros = inputlength(lpf, ceil(Int, signal_len*rate)) - signal_len
+        # resize signal vector to right length and decimate
+        resize_signal!(signal,seg_len,req_zeros)
+        signal = filt(lpf,signal)
+        seg_len = seg_len * rate
+    elseif n == 4
+        # resize signal vector to right length
+        resize_signal!(signal,seg_len)
+    else
+        throw(ArgumentError("Fs/IF ratio must be ≥ 4"))
+    end
+    # downmix with efficient method
+    baseband = ddc4!(signal)
+
+    # return segment averages
+    return average_IQ_seg(baseband,seg_len÷2,window)
 end
 
 function init_board(boardnum::Int)

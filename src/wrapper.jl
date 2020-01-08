@@ -53,7 +53,7 @@ julia> clear_setupdone_bit(boardnum)
 ```
 """
 function clear_setupdone_bit(boardnum::Int)
-    ccall((:SetSetupDoneBit,libacqsynth),Void,(Cushort,Cuint),boardnum,0)
+    ccall((:SetSetupDoneBit,libacqsynth),Cvoid,(Cushort,Cuint),boardnum,0)
 end
 
 """
@@ -253,7 +253,7 @@ julia> set_clock(boardnum,CLOCK_INTERNAL)
 ```
 """
 function set_clock(boardnum::Int, clock::Int)
-    ccall((:SetInternalClockEnable,libacqsynth),Void,(Cushort,Cuint),boardnum,clock)
+    ccall((:SetInternalClockEnable,libacqsynth),Cvoid,(Cushort,Cuint),boardnum,clock)
 end
 
 """
@@ -295,7 +295,7 @@ julia> set_channels(boardnum,chan_select)
 ```
 """
 function set_channels(boardnum::Int, chan_select::Int)
-    ccall((:SelectAdcChannels,libacqsynth),Void,(Cushort,Cuint),boardnum,chan_select)
+    ccall((:SelectAdcChannels,libacqsynth),Cvoid,(Cushort,Cuint),boardnum,chan_select)
 end
 
 """
@@ -332,7 +332,7 @@ julia> set_ECL_trigger(boardnum,1)
 ```
 """
 function set_ECL_trigger(boardnum::Int, state::Int)
-    ccall((:ECLTriggerEnable,libacqsynth),Void,(Cushort,Cuint),boardnum,state)
+    ccall((:ECLTriggerEnable,libacqsynth),Cvoid,(Cushort,Cuint),boardnum,state)
 end
 
 """
@@ -372,7 +372,7 @@ julia> set_ECL_trigger_delay(boardnum,4)
 ```
 """
 function set_ECL_trigger_delay(boardnum::Int, delay::Int)
-    ccall((:SET_ECL_TRIGGER_DELAY,libacqsynth),Void,(Cushort,Cuint),boardnum,delay)
+    ccall((:SET_ECL_TRIGGER_DELAY,libacqsynth),Cvoid,(Cushort,Cuint),boardnum,delay)
 end
 
 """
@@ -423,7 +423,7 @@ julia> set_trigger(boardnum,ttype,slope,channel)
 ```
 """
 function set_waveform_trigger_params(boardnum::Int, threshold::Int, hysteresis::Int=256)
-    ccall((:ConfigureWaveformTrigger,libacqsynth),Void,(Cushort,Cuint,Cuint),boardnum,threshold,hysteresis)
+    ccall((:ConfigureWaveformTrigger,libacqsynth),Cvoid,(Cushort,Cuint,Cuint),boardnum,threshold,hysteresis)
 end
 
 """
@@ -472,7 +472,7 @@ julia> set_trigger(boardnum,ttype,slope)
 ```
 """
 function set_trigger(boardnum::Int, ttype::Int=1, slope::Int=1, channel=1)
-    ccall((:SelectTrigger,libacqsynth),Void,(Cushort,Cuint,Cuint,Cuint),boardnum,ttype,slope,channel)
+    ccall((:SelectTrigger,libacqsynth),Cvoid,(Cushort,Cuint,Cuint,Cuint),boardnum,ttype,slope,channel)
 end
 
 """
@@ -507,7 +507,7 @@ julia> set_pretrigger_mem(boardnum,500)
 ```
 """
 function set_pretrigger_mem(boardnum::Int, samples::Int)
-    ccall((:SetPreTriggerMemory,libacqsynth),Void,(Cushort,Cuint),boardnum,samples)
+    ccall((:SetPreTriggerMemory,libacqsynth),Cvoid,(Cushort,Cuint),boardnum,samples)
 end
 
 """
@@ -542,7 +542,7 @@ julia> set_decimation(boardnum,8)
 ```
 """
 function set_decimation(boardnum::Int, deci_value::Int)
-    ccall((:SetAdcDecimation,libacqsynth),Void,(Cushort,Cuint),boardnum,deci_value)
+    ccall((:SetAdcDecimation,libacqsynth),Cvoid,(Cushort,Cuint),boardnum,deci_value)
 end
 
 """
@@ -596,7 +596,7 @@ function set_segmented_capture(boardnum::Int, count::Int, depth::Int)
 	    depth = min(2^14,cld(depth,16)*16)
 		warn("Segment depth set to a multiple of 16 (new depth: $depth)!")
 	end
-    ccall((:ConfigureSegmentedCapture,libacqsynth),Void,(Cushort,Cuint,Cuint,Cuint),boardnum,count,depth,1)
+    ccall((:ConfigureSegmentedCapture,libacqsynth),Cvoid,(Cushort,Cuint,Cuint,Cuint),boardnum,count,depth,1)
 end
 
 """
@@ -655,7 +655,7 @@ function set_averager(boardnum::Int, count::Int, depth::Int)
 	    depth = min(2^14,cld(depth,16)*16)
 		warn("Average depth set to a multiple of 16 (new depth: $depth)!")
 	end
-    ccall((:ConfigureAverager,libacqsynth),Void,(Cushort,Cuint,Cuint,Cuint),boardnum,count,depth,1)
+    ccall((:ConfigureAverager,libacqsynth),Cvoid,(Cushort,Cuint,Cuint,Cuint),boardnum,count,depth,1)
 end
 
 """
@@ -692,7 +692,7 @@ julia> setup_acquire(boardnum,numblocks)
 ```
 """
 function setup_acquire(boardnum::Int, numblocks::Int=1)
-    ccall((:setupAcquire,libacqsynth),Void,(Cushort,Cuint),boardnum,numblocks)
+    ccall((:setupAcquire,libacqsynth),Cvoid,(Cushort,Cuint),boardnum,numblocks)
 end
 
 """
@@ -726,7 +726,7 @@ julia> mem_read(boardnum,block)
 ```
 """
 function mem_read(boardnum::Int, buffer::Array{Cuchar,1})
-    ccall((:x_Read,libacqsynth),Void,(Cushort,Ptr{Cuchar},Csize_t),boardnum,buffer,DIG_BLOCK_SIZE)
+    ccall((:x_Read,libacqsynth),Cvoid,(Cushort,Ptr{Cuchar},Csize_t),boardnum,buffer,DIG_BLOCK_SIZE)
 end
 
 """
@@ -742,5 +742,5 @@ julia> block = 0
 ```
 """
 function mem_free(buffer::Array{Cuchar,1})
-    ccall((:x_FreeMem,libacqsynth),Void,(Ptr{Cuchar},),buffer)
+    ccall((:x_FreeMem,libacqsynth),Cvoid,(Ptr{Cuchar},),buffer)
 end

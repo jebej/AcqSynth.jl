@@ -14,33 +14,33 @@ end
 function ddcn(signal::Vector{T},n::Integer) where {T<:Real}
 	# Downconvert signal assuming that the sampling frequency is an integer
 	# multiple of the IF (if n==4, use the ddc4! function)
-	out = similar(signal,2*length(signal))
 	# Precompute sine and cos
-	X = similar(signal,2,n)
+	X = Matrix{T}(undef,2,n)
 	for i in 1:n
-		X[1,i] = cospi(T(2*i)/n)
-		X[2,i] = sinpi(T(2*i)/n)
+		X[1,i] = cospi(T(2*(i-1))/n)
+		X[2,i] = sinpi(T(2*(i-1))/n)
 	end
 	# Multiply every sample to compute I & Q
+    D = Matrix{T}(undef,2,length(signal))
     @inbounds for i in 1:length(signal)
-        out[2i-1] = X[1,i%n]*signal[i]
-        out[2i]   = X[2,i%n]*signal[i]
+        D[1,i] = X[1,mod1(i,n)]*signal[i]
+        D[2,i] = X[2,mod1(i,n)]*signal[i]
     end
-	return out
+	return D
 end
 
-function average_IQ_seg(signal::Vector{T},seg_len::Integer) where {T<:Real}
-	# First reshape in 3D array of segments
-	A = reshape_IQ_seg(signal,seg_len)
+function average_IQ_seg(signal::Matrix{T},seg_len::Integer) where {T<:Real}
+	# Reshape in 3D array by stacking segments in the third dimension
+	A = reshape(signal,2,seg_len,:)
     # Average each segment (the second dimension)
     B = mean(A,2)
     # Return complex IQ values
     return reinterpret(Complex{T},vec(B))
 end
 
-function average_IQ_seg(signal::Vector{T},seg_len::Integer,window) where {T<:Real}
-	# First reshape in 3D array of segments
-    A = reshape_IQ_seg(signal,seg_len)
+function average_IQ_seg(signal::Matrix{T},seg_len::Integer,window) where {T<:Real}
+	# Reshape in 3D array by stacking segments in the third dimension
+    A = reshape(signal,2,seg_len,:)
     # Trim each segment as specified by "window"
     cut_i = floor(Int,window[1]/sum(window)*seg_len) + 1
     cut_f = ceil(Int,(window[1]+window[2])/sum(window)*seg_len)
@@ -50,15 +50,15 @@ function average_IQ_seg(signal::Vector{T},seg_len::Integer,window) where {T<:Rea
     return reinterpret(Complex{T},vec(B))
 end
 
-function reshape_IQ_seg(signal::Vector{T},seg_len::Integer) where {T<:Real}
-    # Reshape a signal vector into a 3D IQ array of segments.
-	# If the full vector is not divisible in an integer number of
-    # segments, the last points will be removed.
-    # Warning: this function will modify the input signal array
+function resize_signal!(signal::Vector,seg_len::Integer,zero_pad::Integer=0)
+	# If the full vector is not divisible in an integer number of segments, the
+    # last points will be removed. An optional zero-padding can also be applied
     n_seg = length(signal) ÷ seg_len
-    # First, eliminate points at end of signal that do not belong to a segment
-    resize!(signal,2*n_seg*seg_len) # factor of 2 for I & Q
-    # Reshape into 3D array by stacking segments in the third dimension
-    # The first dimension (size 2) corresponds to I & Q
-    return reshape(signal,2,seg_len,n_seg)
+    tot_len = seg_len*n_seg + zero_pad
+    if tot_len != length(signal)
+        resize!(signal, tot_len)
+    end
+    @inbounds for i in (seg_len*n_seg+1) : tot_len
+        signal[i] = zero(eltype(signal))
+    end
 end

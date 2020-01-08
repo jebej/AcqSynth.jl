@@ -1,8 +1,15 @@
 module AcqSynth
+using DSP, Compat
 
 # Load the DLL
-const depsfile = joinpath(dirname(dirname(@__FILE__)),"deps","deps.jl")
+const depsfile = joinpath(dirname(@__DIR__),"deps","deps.jl")
 include(depsfile)
+
+if VERSION < v"0.7.0"
+    const Cvoid = Void
+else
+    const mean = Compat.Statistics._mean
+end
 
 # Load module functions
 include("acqsynth_h.jl")

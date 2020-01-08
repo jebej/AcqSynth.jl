@@ -1,3 +1,4 @@
+using Compat: Libdl
 # Store the location of the "deps" folder
 const deps_dir = dirname(@__FILE__)
 
