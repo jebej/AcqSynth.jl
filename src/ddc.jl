@@ -29,7 +29,7 @@ function ddcn(signal::Vector{T},n::Integer) where {T<:Real}
 	return D
 end
 
-function average_IQ_seg(signal::Matrix{T},seg_len::Integer) where {T<:Real}
+function average_IQ_seg(signal::Array{T},seg_len::Integer) where {T<:Real}
 	# Reshape in 3D array by stacking segments in the third dimension
 	A = reshape(signal,2,seg_len,:)
     # Average each segment (the second dimension)
@@ -38,7 +38,7 @@ function average_IQ_seg(signal::Matrix{T},seg_len::Integer) where {T<:Real}
     return reinterpret(Complex{T},vec(B))
 end
 
-function average_IQ_seg(signal::Matrix{T},seg_len::Integer,window) where {T<:Real}
+function average_IQ_seg(signal::Array{T},seg_len::Integer,window) where {T<:Real}
 	# Reshape in 3D array by stacking segments in the third dimension
     A = reshape(signal,2,seg_len,:)
     # Trim each segment as specified by "window"
