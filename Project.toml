@@ -1,0 +1,9 @@
+name = "AcqSynth"
+uuid = "9c2da14f-9872-46e4-99e4-a6c2f28130c1"
+authors = ["Jérémy Béjanin <jeremy.bejanin@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
+DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"

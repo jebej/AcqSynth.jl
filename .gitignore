@@ -2,3 +2,4 @@ docs/build
 *.dll
 *.dat
 *.svf
+Manifest.toml
