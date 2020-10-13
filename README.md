@@ -1,6 +1,8 @@
 # AcqSynth.jl
 Julia interface to Ultraview PCIe Data Acquisition Boards
 
+[![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://jebej.github.io/AcqSynth.jl/latest)
+
 ## Installation
 Currently, this package only works on Windows due to its dependence on the Windows DLL.
 

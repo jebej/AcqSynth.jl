@@ -15,3 +15,9 @@ makedocs(
         ],
     ]
 )
+
+deploydocs(
+    repo = "github.com/jebej/AcqSynth.jl.git",
+    target = "build",
+    branch = "gh-pages",
+)
