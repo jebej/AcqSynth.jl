@@ -1,7 +1,6 @@
 # Example showing the use of waveform triggering and segmented capture
-using AcqSynth
+using AcqSynth, PlotlyJS
 const acq = AcqSynth
-using PyPlot
 
 # As in the first example, we setup the board
 boardnum = 0
@@ -38,12 +37,11 @@ numblocks = 100 # let's grab 2 blocks
 acq.setup_acquire(boardnum,numblocks)
 
 # Grab the data from the card
-blocks = acq.get_blocks(boardnum,numblocks) # transfer blocks
-data = acq.get_samples12(blocks) # interpret blocks as 12-bit samples
+data = acq.get_samples_12(boardnum,numblocks) # transfer data as 12-bit samples
 
 # Plot the stuff
-t = (0:length(data))/4E9 # time vector, we are sampling at 4GSPS
-plot(t[1:1000],data[1:1000]); legend(["AIN0"]); grid(true)
+t = (1:length(data))./4E9 # time vector, we are sampling at 4GSPS
+plot(scatter(x=t[1:2000],y=data[1:2000],name="AIN0"))
 
 # # We can configure other things
 # # ECL trigger

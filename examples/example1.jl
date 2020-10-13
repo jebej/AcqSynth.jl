@@ -1,7 +1,6 @@
 # Basic acquisition example
-using AcqSynth
+using AcqSynth, PlotlyJS, Statistics
 const acq = AcqSynth
-using PyPlot
 
 # Let's see if we have a board plugged in
 acq.get_num_boards()
@@ -33,15 +32,14 @@ acq.get_frequency(boardnum)
 numblocks = 4 # let's grab a bunch of blocks
 acq.setup_acquire(boardnum,numblocks) # acquisition starts here!
 
-# Grab the data from the card
-blocks = Vector{UInt8}(numblocks*acq.DIG_BLOCK_SIZE)
-acq.get_blocks!(blocks,boardnum,numblocks) # transfer blocks
-data = acq.get_samples12(blocks) # interpret blocks as 12-bit samples
-data = reshape(data,2,:).'
+# Grab the data from the card with get_samples_12 utility function
+samples = acq.get_samples_12(boardnum,numblocks) # transfer data as 12-bit samples
+data = permutedims(reshape(samples,2,:))
 
 # Plot the stuff
-t = (0:size(data,1))/2E9 # time vector, we are sampling at 2GSPS
-plot(t[1:500],data[1:500,:]); legend(["AIN0","AIN1"]); grid(true)
+t = (1:size(data,1))./2E9 # time vector, we are sampling at 2GSPS
+plot([scatter(x=t[1:2000],y=data[1:2000,1],name="AIN0"),
+      scatter(x=t[1:2000],y=data[1:2000,2],name="AIN1")])
 
 println(" AIN0: $(mean(data[:,1])) ± $(std(data[:,1]))")
 println(" AIN1: $(mean(data[:,2])) ± $(std(data[:,2]))")
