@@ -77,7 +77,7 @@ function init_board(boardnum::Int)
 end
 
 function get_blocks(boardnum::Int,numblocks::Int)
-    blocks = Vector{UInt8}(numblocks*DIG_BLOCK_SIZE)
+    blocks = Vector{UInt8}(undef,numblocks*DIG_BLOCK_SIZE)
     return get_blocks!(blocks,boardnum,numblocks)
 end
 
