@@ -1,8 +1,3 @@
-```@meta
-DocTestSetup  = quote
-    using AcqSynth
-end
-```
 # Low-Level API
 
 ```@autodocs

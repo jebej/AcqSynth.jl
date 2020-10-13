@@ -6,11 +6,10 @@ makedocs(
     modules = [AcqSynth],
     linkcheck = true,
     clean = false,
-    format = :html,
-    html_prettyurls = false,
-    pages = Any[
+    format = Documenter.HTML(prettyurls = false),
+    pages = [
         "Home" => "index.md",
-        "API" => Any[
+        "API" => [
             "api/helpers.md",
             "api/wrapper.md",
         ],
