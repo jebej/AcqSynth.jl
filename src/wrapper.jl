@@ -740,10 +740,10 @@ julia> block = mem_alloc()
 """
 function mem_alloc()
     addr = Ref{Ptr{Cuchar}}()
-    if ccall((:x_MemAlloc,libacqsynth),Cint,(Ptr{Ptr{Cuchar}},Csize_t),addr,DIG_BLOCK_SIZE)==1
+    if ccall((:x_MemAlloc,libacqsynth),Cint,(Ptr{Ptr{Cuchar}},Csize_t),addr,DIG_BLOCK_SIZE) == 1
         error("Failed to allocate block buffer!")
     end
-    buffer = unsafe_wrap(Array,addr[],DIG_BLOCK_SIZE)
+    return unsafe_wrap(Array,addr[],DIG_BLOCK_SIZE) # buffer
 end
 
 
@@ -759,7 +759,7 @@ julia> block = mem_alloc()
 julia> mem_read(boardnum,block)
 ```
 """
-function mem_read(boardnum::Int, buffer::Array{Cuchar,1})
+function mem_read(boardnum::Int, buffer::Vector{Cuchar})
     ccall((:x_Read,libacqsynth),Cvoid,(Cushort,Ptr{Cuchar},Csize_t),boardnum,buffer,DIG_BLOCK_SIZE)
 end
 
@@ -776,6 +776,6 @@ julia> block = 0
 0
 ```
 """
-function mem_free(buffer::Array{Cuchar,1})
+function mem_free(buffer::Vector{Cuchar})
     ccall((:x_FreeMem,libacqsynth),Cvoid,(Ptr{Cuchar},),buffer)
 end

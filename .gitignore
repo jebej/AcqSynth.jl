@@ -1,5 +1,6 @@
 docs/build
 *.dll
+*.so
 *.dat
 *.svf
 Manifest.toml
