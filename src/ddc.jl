@@ -33,7 +33,7 @@ function average_IQ_seg(signal::Array{T},seg_len::Integer) where {T<:Real}
 	# Reshape in 3D array by stacking segments in the third dimension
 	A = reshape(signal,2,seg_len,:)
     # Average each segment (the second dimension)
-    B = mean(A,2)
+    B = mean(A,dims=2)
     # Return complex IQ values
     return reinterpret(Complex{T},vec(B))
 end
@@ -45,7 +45,7 @@ function average_IQ_seg(signal::Array{T},seg_len::Integer,window) where {T<:Real
     cut_i = floor(Int,window[1]/sum(window)*seg_len) + 1
     cut_f = ceil(Int,(window[1]+window[2])/sum(window)*seg_len)
     # Average each windowed segment (the second dimension)
-    B = mean(view(A,:,cut_i:cut_f,:),2)
+    B = mean(view(A,:,cut_i:cut_f,:),dims=2)
     # Return complex IQ values
     return reinterpret(Complex{T},vec(B))
 end

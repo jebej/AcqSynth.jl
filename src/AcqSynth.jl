@@ -1,5 +1,5 @@
 module AcqSynth
-using DSP, Compat, Compat.Libdl
+using DSP, Compat, Compat.Statistics, Compat.Libdl
 
 # Deps dir (must contain AcqSynth library, 'get_usercode.svf', and 'ultra_config.dat')
 const deps_dir = joinpath(dirname(@__DIR__),"deps")
@@ -9,8 +9,6 @@ const libacqsynth = joinpath(deps_dir,"AcqSynth.$dlext")
 
 if VERSION < v"0.7.0"
     const Cvoid = Void
-else
-    const mean = Compat.Statistics._mean
 end
 
 # Load module functions
