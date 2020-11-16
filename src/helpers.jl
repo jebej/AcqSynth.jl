@@ -83,11 +83,12 @@ end
 
 function get_blocks!(blocks::Vector{UInt8},boardnum::Int,numblocks::Int)
     checkbounds(blocks,numblocks*DIG_BLOCK_SIZE)
+    block_buffer = BLOCK_BUFFER[]
     @inbounds for b = 1:numblocks
         # Transfer 1 block from the board into the buffer
-        mem_read(boardnum,BLOCK_BUFFER[])
+        mem_read(boardnum,block_buffer)
         # Save that block
-        blocks[(b-1)*DIG_BLOCK_SIZE+1:b*DIG_BLOCK_SIZE] = BLOCK_BUFFER[]
+        blocks[(b-1)*DIG_BLOCK_SIZE+1:b*DIG_BLOCK_SIZE] = block_buffer
     end
     return blocks
 end
