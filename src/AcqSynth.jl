@@ -1,5 +1,5 @@
 module AcqSynth
-using DSP, Compat, Compat.Statistics, Compat.Libdl
+using Compat, Compat.LinearAlgebra, Compat.Statistics, Compat.Libdl
 
 # Deps dir (must contain AcqSynth library, 'get_usercode.svf', and 'ultra_config.dat')
 const deps_dir = joinpath(dirname(@__DIR__),"deps")
@@ -14,8 +14,9 @@ end
 # Load module functions
 include("acqsynth_h.jl")
 include("wrapper.jl")
-include("ddc.jl")
 include("helpers.jl")
+include("ddc.jl")
+include("decimation.jl")
 
 const BLOCK_BUFFER = Ref{Vector{Cuchar}}()
 

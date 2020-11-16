@@ -11,9 +11,7 @@ function read_seg_samples_ddc(boardnum,numblocks,n::Integer,seg_len,window,v_off
         signal_len = (length(signal)÷seg_len)*seg_len
         rate = 1//(n÷4) # decimation rate
         # create LPF FIR decimator object
-        h = convert(Vector{Float32},resample_filter(rate,1,20))
-        lpf = FIRFilter(h,rate)::FIRFilter{Filters.FIRDecimator{Float32}}
-        setphase!(lpf,timedelay(lpf))
+        lpf = FIRFilter(DECIM_FILTER[n÷4],rate); setphase!(lpf,timedelay(lpf))
         req_zeros = inputlength(lpf, ceil(Int, signal_len*rate)) - signal_len
         # resize signal vector to right length and decimate
         resize_signal!(signal,seg_len,req_zeros)
@@ -25,6 +23,7 @@ function read_seg_samples_ddc(boardnum,numblocks,n::Integer,seg_len,window,v_off
     else
         throw(ArgumentError("Fs/IF ratio must be ≥ 4"))
     end
+    
     # downmix with efficient method
     baseband = ddc4!(signal)
 
