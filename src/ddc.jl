@@ -7,28 +7,32 @@ function read_seg_samples_ddc(boardnum,numblocks,n::Integer,seg_len,window,v_off
     setup_acquire(boardnum,numblocks)
     signal = (get_samples_12(boardnum,numblocks) .* v_conv/2^12) .- (v_conv/2 + v_offset)
 
-    if n > 4 # if needed, use decimating filter
-        signal_len = (length(signal)÷seg_len)*seg_len
-        rate = 1//(n÷4) # decimation rate
-        # create LPF FIR decimator object
-        lpf = FIRFilter(DECIM_FILTER[n÷4],rate); setphase!(lpf,timedelay(lpf))
-        req_zeros = inputlength(lpf, ceil(Int, signal_len*rate)) - signal_len
-        # resize signal vector to right length and decimate
-        resize_signal!(signal,seg_len,req_zeros)
-        signal = filt(lpf,signal)
-        seg_len = Int(seg_len * rate)
+    if n > 4 # if needed, decimate
+        signal = decim_fir(signal, seg_len, 1//(n÷4))
+        seg_len ÷= (n÷4)
     elseif n == 4
         # resize signal vector to right length
-        resize_signal!(signal,seg_len)
+        resize_signal!(signal, seg_len)
     else
         throw(ArgumentError("Fs/IF ratio must be ≥ 4"))
     end
-    
+
     # downmix with efficient method
     baseband = ddc4!(signal)
 
     # return segment averages
-    return average_IQ_seg(baseband,seg_len÷2,window)
+    return average_IQ_seg(baseband, seg_len÷2, window)
+end
+
+function decim_fir(signal::AbstractVector, seg_len::Integer, rate::Rational)
+    signal_len = (length(signal)÷seg_len) * seg_len
+    # create LPF FIR decimator object
+    lpf = FIRFilter(DECIM_FILTER[denominator(rate)],rate); setphase!(lpf,timedelay(lpf))
+    req_zeros = inputlength(lpf, ceil(Int, signal_len*rate)) - signal_len
+    # resize signal vector to right length
+    resize_signal!(signal, seg_len, req_zeros)
+    # decimate with FIR filter
+    return filt(lpf, signal)
 end
 
 function ddc4!(signal::Vector)
