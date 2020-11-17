@@ -24,11 +24,11 @@ function read_seg_samples_ddc(boardnum,numblocks,n::Integer,seg_len,window,v_off
     return average_IQ_seg(baseband, seg_len÷2, window)
 end
 
-function decim_fir(signal::AbstractVector, seg_len::Integer, rate::Rational)
+function decim_fir(signal::AbstractVector, seg_len::Integer, rate::Integer)
     signal_len = (length(signal)÷seg_len) * seg_len
     # create LPF FIR decimator object
-    lpf = FIRFilter(DECIM_FILTER[denominator(rate)],rate); setphase!(lpf,timedelay(lpf))
-    req_zeros = inputlength(lpf, ceil(Int, signal_len*rate)) - signal_len
+    lpf = FIRDecimator(DECIM_FILTER[rate],rate); setphase!(lpf,timedelay(lpf))
+    req_zeros = inputlength(lpf, ceil(Int, signal_len/rate)) - signal_len
     # resize signal vector to right length
     resize_signal!(signal, seg_len, req_zeros)
     # decimate with FIR filter

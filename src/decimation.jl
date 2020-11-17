@@ -1,4 +1,4 @@
-# lifted from DSP.jl
+# copied from DSP.jl & simplified
 
 # resample_filter output for 1//n, with attenuation = 20
 const DECIM_FILTER = Dict{Int,Vector{Float32}}(
@@ -8,31 +8,8 @@ const DECIM_FILTER = Dict{Int,Vector{Float32}}(
     5 => Float32[0.009190319, 0.0, -0.010157721, -0.017348625, -0.01836913, -0.012062294, 0.0, 0.013785479, 0.024021171, 0.026022935, 0.017545154, 0.0, -0.021444079, -0.039034404, -0.044610746, -0.032166116, 0.0, 0.048249178, 0.10409174, 0.15613762, 0.19299671, 0.20630562, 0.19299671, 0.15613762, 0.10409174, 0.048249178, 0.0, -0.032166116, -0.044610746, -0.039034404, -0.021444079, 0.0, 0.017545154, 0.026022935, 0.024021171, 0.013785479, 0.0, -0.012062294, -0.01836913, -0.017348625, -0.010157721, 0.0, 0.009190319],
 )
 
-abstract type Filter end
-abstract type FIRKernel{T} end
-
-# FIRFilter - the kernel does the heavy lifting
-mutable struct FIRFilter{Tk<:FIRKernel} <: Filter
-    kernel::Tk
-    history::Vector
-    historyLen::Int
-    h::Vector
-end
-
-function FIRFilter(h::Vector, ratio::Rational)
-    interpolation = numerator(ratio)
-    decimation    = denominator(ratio)
-    historyLen    = 0
-
-    @assert interpolation == 1 # decimate
-    kernel     = FIRDecimator(h, decimation)
-    historyLen = kernel.hLen - 1
-    history    = zeros(historyLen)
-    return FIRFilter(kernel, history, historyLen, h)
-end
-
 # Decimator FIR kernel
-mutable struct FIRDecimator{T} <: FIRKernel{T}
+mutable struct FIRDecimator{T}
     h::Vector{T}
     hLen::Int
     decimation::Int
@@ -46,61 +23,39 @@ function FIRDecimator(h::Vector, decimation::Integer)
     return FIRDecimator(h, hLen, decimation, inputDeficit)
 end
 
-function filt(self::FIRFilter{FIRDecimator{Th}}, x::AbstractVector{Tx}) where {Th,Tx}
-    bufLen         = outputlength(self, length(x))
-    buffer         = Vector{promote_type(Th,Tx)}(undef, bufLen)
-    samplesWritten = filt!(buffer, self, x)
-
-    samplesWritten == bufLen || resize!(buffer, samplesWritten)
-
+function filt(self::FIRDecimator{Th}, x::AbstractVector{Tx}) where {Th,Tx}
+    buf_len = outputlength(self, length(x))
+    buffer  = Vector{promote_type(Th,Tx)}(undef, buf_len)
+    # decimate
+    s = filt!(buffer, self, x)
+    s == buf_len || resize!(buffer, s)
     return buffer
 end
 
 # Decimation
-function filt!(buffer::AbstractVector{Tb}, self::FIRFilter{FIRDecimator{Th}}, x::AbstractVector{Tx}) where {Tb,Th,Tx}
-    kernel              = self.kernel
-    bufLen              = length(buffer)
-    xLen                = length(x)
-    history::Vector{Tx} = self.history
-    bufIdx              = 0
+function filt!(buf::AbstractVector{Tb}, self::FIRDecimator{Th}, x::AbstractVector{Tx}) where {Tb,Th,Tx}
+    buf_len = length(buf)
+    x_len   = length(x)
+    buf_i   = 0
 
-    if xLen < kernel.inputDeficit
-        self.history = shiftin!(history, x)
-        kernel.inputDeficit -= xLen
-        return bufIdx
+    x_idx = self.inputDeficit
+    nbufout = fld(x_len - x_idx, self.decimation) + 1
+    buf_len >= nbufout || throw(ArgumentError("buffer length insufficient"))
+
+    @inbounds while x_idx <= x_len
+        buf_i += 1
+        buf[buf_i] = dot_b(self.h, x, x_idx)
+        x_idx     += self.decimation
     end
 
-    outLen              = outputlength(self, xLen)
-    inputIdx            = kernel.inputDeficit
-
-    nbufout = fld(xLen - inputIdx, kernel.decimation) + 1
-    bufLen >= nbufout || throw(ArgumentError("buffer length insufficient"))
-
-    while inputIdx <= xLen
-        bufIdx += 1
-
-        if inputIdx < kernel.hLen
-            accumulator = unsafe_dot(kernel.h, history, x, inputIdx)
-        else
-            accumulator = unsafe_dot(kernel.h, x, inputIdx)
-        end
-
-        @inbounds buffer[bufIdx] = accumulator
-        inputIdx                += kernel.decimation
-    end
-
-    kernel.inputDeficit = inputIdx - xLen
-    self.history        = shiftin!(history, x)
-
-    return bufIdx
+    self.inputDeficit = x_idx - x_len
+    return buf_i
 end
 
 # Calculates the delay caused by the FIR filter in # of samples at the input sample rate
-timedelay(self::FIRFilter) = timedelay(self.kernel)
 timedelay(kernel::FIRDecimator) = (kernel.hLen - 1)/2
 
 # setphase! set filter kernel phase index
-setphase!(self::FIRFilter, ϕ::Real) = setphase!(self.kernel, ϕ)
 function setphase!(kernel::FIRDecimator, ϕ::Real)
     ϕ >= zero(ϕ) || throw(ArgumentError("ϕ must be >= 0"))
     xThrowaway = round(Int, ϕ)
@@ -109,7 +64,6 @@ function setphase!(kernel::FIRDecimator, ϕ::Real)
 end
 
 # Calculates the input length of a multirate filtering operation given the output length
-inputlength(self::FIRFilter, outputlength::Integer) = inputlength(self.kernel, outputlength)
 function inputlength(kernel::FIRDecimator, outputlength::Integer)
     inLen  = inputlength(outputlength, 1//kernel.decimation, 1)
     inLen += kernel.inputDeficit - 1
@@ -122,7 +76,6 @@ function inputlength(outputlength::Int, ratio::Union{Integer,Rational}, initial�
 end
 
 # Calculates the resulting length of a multirate filtering operation given an input length
-outputlength(self::FIRFilter, inputlength::Integer) = outputlength(self.kernel, inputlength)
 function outputlength(kernel::FIRDecimator, inputlength::Integer)
     outputlength(inputlength-kernel.inputDeficit+1, 1//kernel.decimation, 1)
 end
@@ -134,44 +87,8 @@ function outputlength(inputlength::Integer, ratio::Union{Integer,Rational}, init
 end
 
 
-# utils
-
-@inline function unsafe_dot(a::Vector{T}, b::Array{T}, bLastIdx::Integer) where T<:BLAS.BlasReal
-    BLAS.dot(length(a), pointer(a), 1, pointer(b, bLastIdx - length(a) + 1), 1)
-end
-
-function unsafe_dot(a::AbstractVector, b::AbstractVector{T}, c::AbstractVector{T}, cLastIdx::Integer) where T
-    aLen    = length(a)
-    dotprod = zero(a[1]*b[1])
-    @simd for i in 1:aLen-cLastIdx
-        @inbounds dotprod += a[i] * b[i+cLastIdx-1]
-    end
-    @simd for i in 1:cLastIdx
-        @inbounds dotprod += a[aLen-cLastIdx+i] * c[i]
-    end
-
-    return dotprod
-end
-
-# Shifts b into the end a.
-# shiftin!([1,2,3,4], [5, 6]) = [3,4,5,6]
-function shiftin!(a::AbstractVector{T}, b::AbstractVector{T}) where T
-    aLen = length(a)
-    bLen = length(b)
-
-    if bLen >= aLen
-        copyto!(a, 1, b, bLen - aLen + 1, aLen)
-    else
-
-        for i in 1:aLen-bLen
-            @inbounds a[i] = a[i+bLen]
-        end
-        bIdx = 1
-        for i in aLen-bLen+1:aLen
-            @inbounds a[i] = b[bIdx]
-            bIdx += 1
-        end
-    end
-
-    return a
+# dot that dots up to a specified index for b
+@inline function dot_b(a::Array{T}, b::Array{T}, b_last::Integer) where T<:BLAS.BlasReal
+    a_len = length(a); dot_len = min(b_last, a_len)
+    BLAS.dot(dot_len, pointer(a, a_len - dot_len + 1), 1, pointer(b, b_last - dot_len + 1), 1)
 end
