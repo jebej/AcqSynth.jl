@@ -5,8 +5,8 @@ function read_seg_samples_ddc(boardnum,numblocks,n::Integer,seg_len,window,v_off
     # array of complex IQ points
     # n is the ratio of the sampling frequency to the IF, it must be an integer multiple of 4
     setup_acquire(boardnum,numblocks)
-    signal = (get_samples_12(boardnum,numblocks) .* v_conv/2^12) .- (v_conv/2 + v_offset)
-    
+    signal = get_volts_12(boardnum,numblocks,v_offset,v_conv)
+
     # calc actual length of signal
     sig_len = (length(signal)÷seg_len) * seg_len
 

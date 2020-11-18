@@ -44,6 +44,23 @@ function init_board(boardnum::Int)
     setup_board(boardnum)
 end
 
+function get_volts_12(boardnum::Int, numblocks::Int, v_offset::T=0f0, v_conv::T=0.350f0) where T<:AbstractFloat
+    # optimized method to get 12-bit voltage samples without allocating memory for the UInt8 data
+    block_buffer = BLOCK_BUFFER[]
+    block_samples = reinterpret(UInt16,block_buffer)
+    len_samples = length(block_samples)
+    volts = Vector{T}(undef,numblocks*len_samples)
+    @inbounds for b = 1:numblocks
+        # Transfer 1 block from the board into the buffer
+        mem_read(boardnum,block_buffer)
+        # Save that block as voltage samples
+        @simd for i in 1:(len_samples)
+            volts[(b-1)*len_samples+i] = T(block_samples[i]&0x0fff) * (v_conv/2^12) - (v_conv/2 + v_offset)
+        end
+    end
+    return volts
+end
+
 function get_blocks(boardnum::Int,numblocks::Int)
     blocks = Vector{UInt8}(undef,numblocks*DIG_BLOCK_SIZE)
     return get_blocks!(blocks,boardnum,numblocks)
