@@ -3,16 +3,18 @@
 function read_seg_samples_ddc(boardnum,numblocks,n::Integer,seg_len,window,v_offset=0f0,v_conv=0.350f0)
     # reads from the card and downconvert + average segments, and return as an
     # array of complex IQ points
-    # n is the ratio of the sampling frequency to the IF, it must be an integer
+    # n is the ratio of the sampling frequency to the IF, it must be an integer multiple of 4
     setup_acquire(boardnum,numblocks)
     signal = (get_samples_12(boardnum,numblocks) .* v_conv/2^12) .- (v_conv/2 + v_offset)
+    
+    # calc actual length of signal
+    sig_len = (length(signal)÷seg_len) * seg_len
 
     if n > 4 # if needed, decimate
-        signal = decim_fir(signal, seg_len, 1//(n÷4))
+        signal = decim_fir(signal, n÷4, sig_len)
         seg_len ÷= (n÷4)
-    elseif n == 4
-        # resize signal vector to right length
-        resize_signal!(signal, seg_len)
+    elseif n == 4 # resize vector to contain whole number of segments
+        resize!(signal, sig_len)
     else
         throw(ArgumentError("Fs/IF ratio must be ≥ 4"))
     end
@@ -24,15 +26,12 @@ function read_seg_samples_ddc(boardnum,numblocks,n::Integer,seg_len,window,v_off
     return average_IQ_seg(baseband, seg_len÷2, window)
 end
 
-function decim_fir(signal::AbstractVector, seg_len::Integer, rate::Integer)
-    signal_len = (length(signal)÷seg_len) * seg_len
+function decim_fir(signal::AbstractVector, rate::Integer, sig_len::Integer=length(signal))
     # create LPF FIR decimator object
-    lpf = FIRDecimator(DECIM_FILTER[rate],rate); setphase!(lpf,timedelay(lpf))
-    req_zeros = inputlength(lpf, ceil(Int, signal_len/rate)) - signal_len
-    # resize signal vector to right length
-    resize_signal!(signal, seg_len, req_zeros)
-    # decimate with FIR filter
-    return filt(lpf, signal)
+    lpf = FIRDecimator(DECIM_FILTER[rate], rate)
+    # resize signal vector to right length and decimate with FIR filter
+    req_zeros = inputlength(lpf, sig_len÷rate) - sig_len
+    return decimate(lpf, resize_signal!(signal, sig_len, req_zeros))
 end
 
 function ddc4!(signal::Vector)
@@ -86,16 +85,17 @@ function average_IQ_seg(signal::Array{T},seg_len::Integer,window) where {T<:Real
     return reinterpret(Complex{T},vec(B))
 end
 
-function resize_signal!(signal::Vector,seg_len::Integer,zero_pad::Integer=0)
-	# If the full vector is not divisible in an integer number of segments, the
-    # last points will be removed. An optional zero-padding can also be applied
-    n_seg = length(signal) ÷ seg_len
-    tot_len = seg_len*n_seg + zero_pad
-    if tot_len != length(signal)
-        resize!(signal, tot_len)
-    end
-    @inbounds for i in (seg_len*n_seg+1) : tot_len
-        signal[i] = zero(eltype(signal))
+function resize_signal!(signal::Vector{T}, sig_len::Integer, zero_pad::Integer=0) where T
+	# Resize the signal to (sig_len+zero_pad). The indices past sig_len are zeroed-out
+    tot_len = sig_len + zero_pad
+    resize!(signal, tot_len)
+    @simd for i in (sig_len+1) : tot_len
+        @inbounds signal[i] = zero(T)
     end
     return signal
+end
+
+function resize_signal!(signal::AbstractVector{T}, sig_len::Integer, zero_pad::Integer=0) where T
+	# Resize the signal to (sig_len+zero_pad). The indices past sig_len are zeroed-out
+    return vcat(signal[1:sig_len], zeros(T,zero_pad))
 end

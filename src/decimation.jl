@@ -1,4 +1,4 @@
-# copied from DSP.jl & simplified
+# copied from DSP.jl & simplified + multithreaded
 
 # resample_filter output for 1//n, with attenuation = 20
 const DECIM_FILTER = Dict{Int,Vector{Float32}}(
@@ -9,86 +9,47 @@ const DECIM_FILTER = Dict{Int,Vector{Float32}}(
 )
 
 # Decimator FIR kernel
-mutable struct FIRDecimator{T}
+struct FIRDecimator{T}
     h::Vector{T}
-    hLen::Int
     decimation::Int
-    inputDeficit::Int
+    input_delay::Int
 end
 
 function FIRDecimator(h::Vector, decimation::Integer)
-    h            = reverse(h, dims=1)
-    hLen         = length(h)
-    inputDeficit = 1
-    return FIRDecimator(h, hLen, decimation, inputDeficit)
+    # Calculate the delay caused by the FIR filter in # of samples at the input sample rate
+    input_delay = round(Int, (length(h) - 1)/2) + 1
+    return FIRDecimator(h, decimation, input_delay)
 end
 
-function filt(self::FIRDecimator{Th}, x::AbstractVector{Tx}) where {Th,Tx}
-    buf_len = outputlength(self, length(x))
-    buffer  = Vector{promote_type(Th,Tx)}(undef, buf_len)
-    # decimate
-    s = filt!(buffer, self, x)
-    s == buf_len || resize!(buffer, s)
-    return buffer
+function decimate(kernel::FIRDecimator{Th}, x::AbstractVector{Tx}) where {Th,Tx}
+    buf_len = outputlength(kernel, length(x))
+    return decimate!(Vector{promote_type(Th,Tx)}(undef, buf_len), kernel, x)
 end
 
-# Decimation
-function filt!(buf::AbstractVector{Tb}, self::FIRDecimator{Th}, x::AbstractVector{Tx}) where {Tb,Th,Tx}
+function decimate!(buf::AbstractVector, kernel::FIRDecimator, x::AbstractVector)
     buf_len = length(buf)
-    x_len   = length(x)
-    buf_i   = 0
-
-    x_idx = self.inputDeficit
-    nbufout = fld(x_len - x_idx, self.decimation) + 1
-    buf_len >= nbufout || throw(ArgumentError("buffer length insufficient"))
-
-    @inbounds while x_idx <= x_len
-        buf_i += 1
-        buf[buf_i] = dot_b(self.h, x, x_idx)
-        x_idx     += self.decimation
+    x_idx = kernel.input_delay
+    decim = kernel.decimation
+    checkbounds(x, buf_len*decim+x_idx)
+    Threads.@threads for i in 1:buf_len
+        @inbounds buf[i] = dot_b(kernel.h, x, (i-1)*decim+x_idx)
     end
-
-    self.inputDeficit = x_idx - x_len
-    return buf_i
+    return buf
 end
 
-# Calculates the delay caused by the FIR filter in # of samples at the input sample rate
-timedelay(kernel::FIRDecimator) = (kernel.hLen - 1)/2
+# Calculate the input length of a multirate filtering operation given the output length
+inputlength(kernel::FIRDecimator, outlen::Integer) = outlen * kernel.decimation + kernel.input_delay
 
-# setphase! set filter kernel phase index
-function setphase!(kernel::FIRDecimator, ϕ::Real)
-    ϕ >= zero(ϕ) || throw(ArgumentError("ϕ must be >= 0"))
-    xThrowaway = round(Int, ϕ)
-    kernel.inputDeficit += xThrowaway
-    return nothing
-end
+# Calculate the resulting length of a multirate filtering operation given an input length
+outputlength(kernel::FIRDecimator, inlen::Integer) = cld(inlen - kernel.input_delay, kernel.decimation)
 
-# Calculates the input length of a multirate filtering operation given the output length
-function inputlength(kernel::FIRDecimator, outputlength::Integer)
-    inLen  = inputlength(outputlength, 1//kernel.decimation, 1)
-    inLen += kernel.inputDeficit - 1
-end
-function inputlength(outputlength::Int, ratio::Union{Integer,Rational}, initialϕ::Integer)
-    interpolation = numerator(ratio)
-    decimation    = denominator(ratio)
-    inLen         = (outputlength * decimation + initialϕ - 1) / interpolation
-    return floor(Int, inLen)
-end
-
-# Calculates the resulting length of a multirate filtering operation given an input length
-function outputlength(kernel::FIRDecimator, inputlength::Integer)
-    outputlength(inputlength-kernel.inputDeficit+1, 1//kernel.decimation, 1)
-end
-function outputlength(inputlength::Integer, ratio::Union{Integer,Rational}, initialϕ::Integer)
-    interpolation = numerator(ratio)
-    decimation    = denominator(ratio)
-    outLen        = ((inputlength * interpolation) - initialϕ + 1) / decimation
-    return ceil(Int, outLen)
-end
-
-
-# dot that dots up to a specified index for b
-@inline function dot_b(a::Array{T}, b::Array{T}, b_last::Integer) where T<:BLAS.BlasReal
-    a_len = length(a); dot_len = min(b_last, a_len)
-    BLAS.dot(dot_len, pointer(a, a_len - dot_len + 1), 1, pointer(b, b_last - dot_len + 1), 1)
+# dot up to a specified index for b
+function dot_b(a::AbstractArray{T}, b::AbstractArray{T}, b_last::Integer) where T<:Real
+    a_len = length(a)
+    dot_len = min(b_last, a_len)
+    r = zero(T)*zero(T)
+    @simd for i in 1:dot_len
+        @inbounds r += a[a_len - dot_len + i] * b[b_last - dot_len + i]
+    end
+    return r
 end
