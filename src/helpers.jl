@@ -47,26 +47,26 @@ end
 function get_volts_12(boardnum::Int, numblocks::Int, v_offset::T=0f0, v_conv::T=0.350f0) where T<:AbstractFloat
     # optimized method to get 12-bit voltage samples without allocating memory for the UInt8 data
     block_buffer = BLOCK_BUFFER[]
-    block_samples = reinterpret(UInt16,block_buffer)
+    block_samples = reinterpret(UInt16, block_buffer)
     len_samples = length(block_samples)
-    volts = Vector{T}(undef,numblocks*len_samples)
-    @inbounds for b = 1:numblocks
+    volts = Vector{T}(undef, numblocks*len_samples)
+    @inbounds for b in 1:numblocks
         # Transfer 1 block from the board into the buffer
-        mem_read(boardnum,block_buffer)
+        mem_read(boardnum, block_buffer)
         # Save that block as voltage samples
-        @simd for i in 1:(len_samples)
+        @simd for i in 1:len_samples
             volts[(b-1)*len_samples+i] = T(block_samples[i]&0x0fff) * (v_conv/2^12) - (v_conv/2 + v_offset)
         end
     end
     return volts
 end
 
-function get_blocks(boardnum::Int,numblocks::Int)
-    blocks = Vector{UInt8}(undef,numblocks*DIG_BLOCK_SIZE)
-    return get_blocks!(blocks,boardnum,numblocks)
+function get_blocks(boardnum::Int, numblocks::Int)
+    blocks = Vector{UInt8}(undef, numblocks*DIG_BLOCK_SIZE)
+    return get_blocks!(blocks, boardnum, numblocks)
 end
 
-function get_blocks!(blocks::Vector{UInt8},boardnum::Int,numblocks::Int)
+function get_blocks!(blocks::AbstractVector{UInt8}, boardnum::Int, numblocks::Int)
     checkbounds(blocks,numblocks*DIG_BLOCK_SIZE)
     block_buffer = BLOCK_BUFFER[]
     @inbounds for b = 1:numblocks
@@ -78,37 +78,21 @@ function get_blocks!(blocks::Vector{UInt8},boardnum::Int,numblocks::Int)
     return blocks
 end
 
-function get_samples_12(boardnum::Int,numblocks::Int)
-    blocks = get_blocks(boardnum,numblocks)
-    return reinterpret_samples_12!(blocks)
-end
-
-function get_samples_16(boardnum::Int,numblocks::Int)
-    blocks = get_blocks(boardnum,numblocks)
-    return reinterpret_samples_16!(blocks)
-end
-
-function get_samples_32(boardnum::Int,numblocks::Int)
-    blocks = get_blocks(boardnum,numblocks)
-    return reinterpret_samples_32!(blocks)
-end
-
-function reinterpret_samples_12!(blocks::Vector{UInt8})
-    # To get the 12-bit samples, we recast to an array of UInt16 and keep only
-    # the 12 least significant bits.
-    samples = reinterpret(UInt16,blocks)
-    @inbounds for n = 1:length(samples)
-        samples[n] = samples[n]&0x0fff
-    end
+function get_samples_12(boardnum::Int, numblocks::Int)
+    # To get the 12-bit samples we use get_samples_16 and keep only the 12 least significant bits
+    samples = get_samples_16(boardnum, numblocks)
+    samples .= samples .& 0x0fff
     return samples
 end
 
-function reinterpret_samples_16!(blocks::Vector{UInt8})
-    # To get the 16-bit samples, we simply recast to UInt16.
-    return reinterpret(UInt16,blocks)
+function get_samples_16(boardnum::Int, numblocks::Int)
+    samples = Vector{UInt16}(undef, numblocks*DIG_BLOCK_SIZE÷2)
+    get_blocks!(reinterpret(UInt8, samples), boardnum, numblocks)
+    return samples
 end
 
-function reinterpret_samples_32!(blocks::Vector{UInt8})
-    # To get the 32-bit samples, we simply recast to UInt32.
-    return reinterpret(UInt32,blocks)
+function get_samples_32(boardnum::Int, numblocks::Int)
+    samples = Vector{UInt32}(undef, numblocks*DIG_BLOCK_SIZE÷4)
+    get_blocks!(reinterpret(UInt8, samples), boardnum, numblocks)
+    return samples
 end
