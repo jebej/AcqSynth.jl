@@ -23,7 +23,8 @@ end
 
 function decimate(kernel::FIRDecimator{Th}, x::AbstractVector{Tx}) where {Th,Tx}
     buf_len = outputlength(kernel, length(x))
-    return decimate!(Vector{promote_type(Th,Tx)}(undef, buf_len), kernel, x)
+    buf = Vector{promote_type(Th,Tx)}(undef, buf_len)
+    return decimate!(buf, kernel, x)
 end
 
 function decimate!(buf::AbstractVector, kernel::FIRDecimator, x::AbstractVector)
