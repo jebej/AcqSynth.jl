@@ -619,11 +619,11 @@ julia> set_segmented_capture(boardnum,count,depth)
 function set_segmented_capture(boardnum::Int, count::Int, depth::Int)
 	if depth > 2^14 && is_AD12(boardnum)
 		depth = 2^14
-		warn("Segment depth reduced to maximum of 2^14 for AD12 board!")
+		@warn("Segment depth reduced to maximum of 2^14 for AD12 board!")
 	end
 	if depth%16 != 0
 	    depth = min(2^14,cld(depth,16)*16)
-		warn("Segment depth set to a multiple of 16 (new depth: $depth)!")
+		@warn("Segment depth set to a multiple of 16 (new depth: $depth)!")
 	end
     ccall((:ConfigureSegmentedCapture,libacqsynth),Cvoid,(Cushort,Cuint,Cuint,Cuint),boardnum,count,depth,1)
 end
@@ -675,15 +675,15 @@ julia> set_averager(boardnum,count,depth)
 function set_averager(boardnum::Int, count::Int, depth::Int)
 	if count > 64 && is_AD12(boardnum)
 		count = 64
-		warn("Average count reduced to maximum of 64 for AD12 board!")
+		@warn("Average count reduced to maximum of 64 for AD12 board!")
 	end
 	if depth > 2^14 && is_AD12(boardnum)
 		depth = 2^14
-		warn("Average depth reduced to maximum of 2^14 for AD12 board!")
+		@warn("Average depth reduced to maximum of 2^14 for AD12 board!")
 	end
 	if depth%16 != 0
 	    depth = min(2^14,cld(depth,16)*16)
-		warn("Average depth set to a multiple of 16 (new depth: $depth)!")
+		@warn("Average depth set to a multiple of 16 (new depth: $depth)!")
 	end
     ccall((:ConfigureAverager,libacqsynth),Cvoid,(Cushort,Cuint,Cuint,Cuint),boardnum,count,depth,1)
 end
