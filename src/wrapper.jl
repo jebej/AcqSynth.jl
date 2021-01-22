@@ -617,11 +617,7 @@ julia> set_segmented_capture(boardnum,count,depth)
 ```
 """
 function set_segmented_capture(boardnum::Int, count::Int, depth::Int)
-	if depth > 2^14 && is_AD12(boardnum)
-		depth = 2^14
-		@warn("Segment depth reduced to maximum of 2^14 for AD12 board!")
-	end
-	if depth%16 != 0
+	if depth % 16 != 0
 	    depth = min(2^14,cld(depth,16)*16)
 		@warn("Segment depth set to a multiple of 16 (new depth: $depth)!")
 	end
