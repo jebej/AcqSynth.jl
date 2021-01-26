@@ -15,7 +15,9 @@ struct FIRDecimator{T}
     input_delay::Int
 end
 
-function FIRDecimator(h::Vector, decimation::Integer)
+function FIRDecimator(decimation::Integer)
+    # Select filter coefficients
+    h = DECIM_FILTER[decimation]
     # Calculate the delay caused by the FIR filter in # of samples at the input sample rate
     input_delay = round(Int, (length(h) - 1)/2) + 1
     return FIRDecimator(h, decimation, input_delay)

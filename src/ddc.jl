@@ -34,7 +34,7 @@ end
 
 function decim_fir(signal::AbstractVector, rate::Integer, sig_len::Integer=length(signal))
     # create LPF FIR decimator object
-    lpf = FIRDecimator(DECIM_FILTER[rate], rate)
+    lpf = FIRDecimator(rate)
     # resize signal vector to right length and decimate with FIR filter
     req_zeros = inputlength(lpf, sig_len÷rate) - sig_len
     return decimate(lpf, resize_signal!(signal, sig_len, req_zeros))
