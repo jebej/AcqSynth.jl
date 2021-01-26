@@ -3,27 +3,33 @@
 function read_seg_samples_ddc(boardnum,numblocks,n::Integer,seg_len,window,v_offset=0f0,v_conv=0.350f0)
     # reads from the card and downconvert + average segments, and return as an
     # array of complex IQ points
+    seg_IQ = read_seg_waveforms_ddc(boardnum,numblocks,n,seg_len,v_offset,v_conv)
+    # return windowed segment averages
+    return average_IQ_seg(seg_IQ, window)
+end
+
+function read_seg_waveforms_ddc(boardnum,numblocks,n::Integer,seg_len,v_offset=0f0,v_conv=0.350f0)
+    # reads from the card and downconvert + average segments, and return as an
+    # array of complex IQ points
     # n is the ratio of the sampling frequency to the IF, it must be an integer multiple of 4
+    # first, trigger the board and download data
     setup_acquire(boardnum,numblocks)
     signal = get_volts_12(boardnum,numblocks,v_offset,v_conv)
-
-    # calc actual length of signal
+    # calc the length of the actual signal, given the segment length
     sig_len = (length(signal)÷seg_len) * seg_len
-
-    if n > 4 # if needed, decimate
+    if n > 4 && (n÷4)*4 == n # if needed, decimate
         signal = decim_fir(signal, n÷4, sig_len)
         seg_len ÷= (n÷4)
+        resize!(signal, (length(signal)÷2)*2) # resize to even length
     elseif n == 4 # resize vector to contain whole number of segments
         resize!(signal, sig_len)
     else
-        throw(ArgumentError("Fs/IF ratio must be ≥ 4"))
+        throw(ArgumentError("Fs/IF ratio must be an integer multiple of 4 that is also ≥ 4"))
     end
-
-    # downmix with efficient method
+    # downmix with efficient method (x2 decimation since signal is split into I & Q components)
     baseband = ddc4!(signal)
-
-    # return segment averages
-    return average_IQ_seg(baseband, seg_len÷2, window)
+    # return IQ segments as complex array
+    return reshape(reinterpret(Complex{Float32},baseband), seg_len÷2, :)
 end
 
 function decim_fir(signal::AbstractVector, rate::Integer, sig_len::Integer=length(signal))
@@ -64,25 +70,22 @@ function ddcn(signal::Vector{T},n::Integer) where {T<:Real}
 	return D
 end
 
-function average_IQ_seg(signal::Array{T},seg_len::Integer) where {T<:Real}
-	# Reshape in 3D array by stacking segments in the third dimension
-	A = reshape(signal,2,seg_len,:)
-    # Average each segment (the second dimension)
-    B = mean(A,dims=2)
-    # Return complex IQ values
-    return reinterpret(Complex{T},vec(B))
+function average_IQ_seg(seg_IQ::AbstractMatrix{T}) where {T<:Complex}
+    # Average over segments (the first dimension)
+    IQz = mean(seg_IQ,dims=1)
+    # Return complex IQ value vector
+    return vec(IQz)
 end
 
-function average_IQ_seg(signal::Array{T},seg_len::Integer,window) where {T<:Real}
-	# Reshape in 3D array by stacking segments in the third dimension
-    A = reshape(signal,2,seg_len,:)
+function average_IQ_seg(seg_IQ::AbstractMatrix{T},window) where {T<:Complex}
     # Trim each segment as specified by "window"
+    seg_len = size(seg_IQ,1)
     cut_i = floor(Int,window[1]/sum(window)*seg_len) + 1
     cut_f = ceil(Int,(window[1]+window[2])/sum(window)*seg_len)
-    # Average each windowed segment (the second dimension)
-    B = mean(view(A,:,cut_i:cut_f,:),dims=2)
+    # Average each windowed segment (the first dimension)
+    IQz = mean(view(seg_IQ,cut_i:cut_f,:),dims=1)
     # Return complex IQ values
-    return reinterpret(Complex{T},vec(B))
+    return vec(IQz)
 end
 
 function resize_signal!(signal::Vector{T}, sig_len::Integer, zero_pad::Integer=0) where T
