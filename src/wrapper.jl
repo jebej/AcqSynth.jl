@@ -673,10 +673,6 @@ function set_averager(boardnum::Int, count::Int, depth::Int)
 		count = 64
 		@warn("Average count reduced to maximum of 64 for AD12 board!")
 	end
-	if depth > 2^14 && is_AD12(boardnum)
-		depth = 2^14
-		@warn("Average depth reduced to maximum of 2^14 for AD12 board!")
-	end
 	if depth%16 != 0
 	    depth = min(2^14,cld(depth,16)*16)
 		@warn("Average depth set to a multiple of 16 (new depth: $depth)!")
