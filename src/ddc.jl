@@ -1,20 +1,22 @@
 # Digital down conversion
 
 function read_seg_samples_ddc(boardnum,numblocks,n::Integer,seg_len,window,v_offset=0f0,v_conv=0.350f0)
-    # reads from the card and downconvert + average segments, and return as an
-    # array of complex IQ points
+    # read from the card and downconvert + average segments, and return as an array of complex IQ points
     seg_IQ = read_seg_waveforms_ddc(boardnum,numblocks,n,seg_len,v_offset,v_conv)
     # return windowed segment averages
     return average_IQ_seg(seg_IQ, window)
 end
 
 function read_seg_waveforms_ddc(boardnum,numblocks,n::Integer,seg_len,v_offset=0f0,v_conv=0.350f0)
-    # reads from the card and downconvert + average segments, and return as an
-    # array of complex IQ points
+    # read from the card, downconvert segments, and return as an array of complex IQ points
     # n is the ratio of the sampling frequency to the IF, it must be an integer multiple of 4
     # first, trigger the board and download data
     setup_acquire(boardnum,numblocks)
+    if iszero(first(get_averager(boardnum)))
     signal = get_volts_12(boardnum,numblocks,v_offset,v_conv)
+    else # averaging is enabled
+        signal = get_volts_16(boardnum,numblocks,v_offset,v_conv)
+    end
     # calc the length of the actual signal, given the segment length
     sig_len = (length(signal)÷seg_len) * seg_len
     if n > 4 && (n÷4)*4 == n # if needed, decimate
