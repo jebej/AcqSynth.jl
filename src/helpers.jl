@@ -44,6 +44,13 @@ function init_board(boardnum::Int)
     setup_board(boardnum)
 end
 
+function setup_acquire_async(boardnum::Int, numblocks::Int)
+    # asynchronous version of "setup_acquire", done with a Task
+    ASYNC_TASK[] = @async setup_acquire(boardnum, numblocks)
+    ASYNC_ACQN[] = true
+    return nothing
+end
+
 function get_volts_12(boardnum::Int, numblocks::Int, v_offset::T=0f0, v_conv::T=0.350f0) where T<:AbstractFloat
     # optimized method to get 12-bit voltage samples without allocating memory for the UInt16 data
     block_buffer = BLOCK_BUFFER[]

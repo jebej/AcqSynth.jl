@@ -11,9 +11,14 @@ function read_seg_waveforms_ddc(boardnum,numblocks,n::Integer,seg_len,v_offset=0
     # read from the card, downconvert segments, and return as an array of complex IQ points
     # n is the ratio of the sampling frequency to the IF, it must be an integer multiple of 4
     # first, trigger the board and download data
-    setup_acquire(boardnum,numblocks)
+    if ASYNC_ACQN[] # acquisition was already started asynchronously, wait for task to be complete
+        wait(ASYNC_TASK[])
+        ASYNC_ACQN[] = false
+    else # start acquisition (will block until complete)
+        setup_acquire(boardnum,numblocks)
+    end
     if iszero(first(get_averager(boardnum)))
-    signal = get_volts_12(boardnum,numblocks,v_offset,v_conv)
+        signal = get_volts_12(boardnum,numblocks,v_offset,v_conv)
     else # averaging is enabled
         signal = get_volts_16(boardnum,numblocks,v_offset,v_conv)
     end

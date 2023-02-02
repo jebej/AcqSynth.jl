@@ -20,6 +20,10 @@ include("decimation.jl")
 
 const BLOCK_BUFFER = Ref{Vector{Cuchar}}()
 
+# used with setup_acquire_async
+const ASYNC_ACQN = Ref{Bool}(false)
+const ASYNC_TASK = Ref{Task}()
+
 function __init__()
     # Make sure that the required files are there
     for file in ["AcqSynth.$dlext", "get_usercode.svf", "ultra_config.dat"]
