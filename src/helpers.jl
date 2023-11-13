@@ -17,14 +17,20 @@ function list_boards()
     end
 end
 
-function configure_for_ttl_triggering(boardnum,clock=1,channels=3;num_seg=0,seg_len=8192)
+function configure_for_ttl_triggering(boardnum,clock=1,channels=3;num_seg=0,seg_len=8192,num_avg=0,avg_len=8192)
     setup_board(boardnum)
 	set_clock(boardnum,clock)
 	set_channels(boardnum,3) # needed to make sure clock is updated properly when moving to single channel mode
 	set_channels(boardnum,channels)
 	set_trigger(boardnum,4,1)
-	# if num_seg == 0, segmented capture is disabled
-	set_segmented_capture(boardnum,num_seg,seg_len)
+    # configure capture mode
+    if num_seg != 0 && num_avg == 0
+	    set_segmented_capture(boardnum,num_seg,seg_len)
+    elseif num_avg != 0 && num_seg == 0
+        set_averager(boardnum,num_avg,avg_len)
+    else
+        throw(ArgumentError("only one of `num_seg` or `num_avg` can be nonzero"))
+    end
 end
 
 function configure_for_waveform_triggering(boardnum,clock=1,channels=3,trig_ch=1,thresh=2^11,hyst=128;num_avg=0,avg_len=8192)
