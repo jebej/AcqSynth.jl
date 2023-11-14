@@ -25,9 +25,10 @@ function read_seg_waveforms_ddc(boardnum,numblocks,n::Integer,seg_len,v_offset=0
     # calc the length of the actual signal, given the segment length
     sig_len = (length(signal)÷seg_len) * seg_len
     if n > 4 && (n÷4)*4 == n # if needed, decimate
-        signal = decim_fir(signal, n÷4, sig_len)
-        seg_len ÷= (n÷4)
-        resize!(signal, (length(signal)÷2)*2) # resize to even length
+        r = n÷4 # decimation rate
+        signal = decim_fir(signal, r, sig_len)
+        seg_len = (seg_len÷2r)*2 # segment length must be an even number
+        resize!(signal, (length(signal)÷seg_len)*seg_len) # resize to integer number of segments
     elseif n == 4 # resize vector to contain whole number of segments
         resize!(signal, sig_len)
     else
