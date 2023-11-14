@@ -34,6 +34,8 @@ function read_seg_waveforms_ddc(boardnum,numblocks,n::Integer,seg_len,v_offset=0
     else
         throw(ArgumentError("Fs/IF ratio must be an integer multiple of 4 that is also ≥ 4"))
     end
+    # subtract dc component
+    signal .= signal .- mean(signal, dims=1)
     # downmix with efficient method (x2 decimation since signal is split into I & Q components)
     baseband = ddc4!(signal)
     # return IQ segments as complex array
